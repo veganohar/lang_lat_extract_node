@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get("/getOrders", async (req, res) => {
   try {
-    const range = "Orders!A2:Q"
+    const range = "Orders!A2:S"
     const rows = await getOrders(range);
     res.json({ data: rows });
   } catch (error) {
@@ -16,7 +16,7 @@ router.get("/getOrders", async (req, res) => {
 
 router.post("/newOrder", async (req, res) => {
   try {
-    const range = "Orders!A:Q";
+    const range = "Orders!A:S";
     const rows = await newOrder(range,req.body);
     res.status(200).json({ data: rows, status:200, message:"New Order Created Successfully!" });
   } catch (error) {

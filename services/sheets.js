@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import { expandUrlAndGetCoords } from '../utils/coordsUtil.js';
 import { writeToSheet, readSheetinSequence, clearData } from "../utils/readWriteSheetsUtil.js";
+import { getTwoWheelerDistances } from "../utils/findDistanceUtil.js";
 
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
 const CUSTOMERSSHEET_ID = config.customersSheetId;
@@ -39,6 +40,16 @@ export async function readSheet(range) {
   return output;
 }
 
+
+export async function synchDistances(range) {
+    const data = await readSheetinSequence(range, CUSTOMERSSHEET_ID);
+    const coords = data.map(item => item[0]);
+    const distancesData = await getTwoWheelerDistances(coords);
+    const distances = distancesData.map(item => item.distanceMeters);
+    const writeRange = "Sheet1!F2:F";
+    await clearData(writeRange, CUSTOMERSSHEET_ID);
+    return await writeToSheet(writeRange, distances, CUSTOMERSSHEET_ID);
+}
 
 
 

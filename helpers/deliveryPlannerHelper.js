@@ -5,18 +5,6 @@ const config = JSON.parse(
     await readFile(new URL("../config/config.json", import.meta.url))
 );
 const flavorKeys = ["cc", "ce", "eb", "em", "ev", "gc", "lc", "mc", "ss"];
-const prices = {
-    curd: 130,
-    cc: 270,
-    ce: 290,
-    eb: 220,
-    em: 220,
-    ev: 210,
-    gc: 290,
-    lc: 240,
-    mc: 270,
-    ss: 220
-};
 
 // ---- Helpers ----
 export function cleanAddress(address = "") {
@@ -94,7 +82,7 @@ async function routesAPI(waypoints) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-Goog-Api-Key": "AIzaSyBBopPrVuLCInXqDd8JZe1GVv3amV7peqI",
+            "X-Goog-Api-Key": config.googleMapAPIKey,
             "X-Goog-FieldMask": "routes.optimizedIntermediateWaypointIndex,routes.distanceMeters,routes.duration,routes.legs.startLocation,routes.legs.endLocation,routes.legs.distanceMeters,routes.legs.duration"
         },
         body: JSON.stringify(body)
@@ -174,8 +162,8 @@ export function calculateTripSchedule(legs, startTime, bufferMinutes) {
     };
 }
 
-export function parseRows(data) {
-    const rows = data.map(v => v.values?.[0] || []);
+export function parseRows(data,sourceFn) {
+    const rows = sourceFn=='deliveryPlanner'?data.map(v => v.values?.[0] || []):data;
     return rows.map(row => {
         const [
             name, phone, address, location, coords, curd,
@@ -186,22 +174,13 @@ export function parseRows(data) {
         flavorKeys.forEach((key, idx) => {
             flavorValues[key] = rest[idx] || ""; // safe fallback
         });
-        const comments = rest[flavorKeys.length+1] || ""; // last one after flavors
-        // calculate amount
-        let amount = 0;
-        if (curd) {
-            amount += Number(curd) * prices["curd"];
-        }
-        // icecream prices
-        flavorKeys.forEach(key => {
-            if (flavorValues[key]) {
-                amount += Number(flavorValues[key]) * (prices[key] || 0);
-            }
-        });
+        const comments = rest[flavorKeys.length+1] || ""; 
+        const distance = Number(rest[flavorKeys.length+2]);
+        const amount = Number(rest[flavorKeys.length])
         return {
             name, phone, address, location, coords, curd,
             ...flavorValues, // spread flavors dynamically
-            amount, comments
+            amount, comments, distance
         };
     });
 }

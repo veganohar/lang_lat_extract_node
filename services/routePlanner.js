@@ -1,23 +1,21 @@
 import { readFile } from "fs/promises";
 import { sendWhatsAppMessage } from '../utils/whatsAppUtil.js';
-import { optimizeRoute, calculateTripSchedule, parseRows, buildWaypoints, buildOrdersMessage, buildSummary } from '../helpers/deliveryPlannerHelper.js'
-import { clusterDeliveriesByDistanceFromBase } from '../helpers/clusterHelper.js';
-import { optimizedRoute, routeDistance } from '../helpers/tspHelper.js';
-import { improveClusters } from '../helpers/clusterImproverHelper.js';
-import { clearDistanceCache } from '../utils/distanceUtils.js';
+import { optimizeRoute, calculateTripSchedule, parseRows, buildWaypoints, buildOrdersMessage, buildSummary } from '../helpers/deliveryPlannerHelper.js';
 import { readSheetinRanges, readSheetinSequence } from "../utils/readWriteSheetsUtil.js";
-import { optimizeDeliveries } from "../helpers/distanceMatrixHelper.js"
+import { optimizeDeliveries } from "../helpers/distanceMatrixHelper.js";
+import { clusterWaypointsPython } from "../helpers/clusterRoutesHelper.js";
+
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
 const CUSTOMERSSHEET_ID = config.customersSheetId;
 
 export async function deliveryPlanner(rowIds, stTime, avgDelay) {
   // prepare ranges
   const idsArray = rowIds.split(",");
-  const ranges = idsArray.map(id => `Orders!A${id}:Q${id}`);
+  const ranges = idsArray.map(id => `Orders!A${id}:R${id}`);
   // fetch sheet data
   const data = await readSheetinRanges(ranges, CUSTOMERSSHEET_ID);
   // format rows
-  const formattedData = parseRows(data);
+  const formattedData = parseRows(data, 'deliveryPlanner');
   // prepare waypoints
   const waypoints = buildWaypoints(formattedData);
   // optimize route
@@ -43,41 +41,40 @@ export async function deliveryPlanner(rowIds, stTime, avgDelay) {
     optimizedLocationsMapUrl,
     whatsappMessage,
     orderedData,
-    summary: summaryObject
+    summary: summaryObject,
+    data
   };
 }
 
 
-export async function planRoutes() {
-  clearDistanceCache(); // start fresh if needed
-  const deliveryList = await readSheetinSequence("Orders!A2:Q", CUSTOMERSSHEET_ID);
-  const deliveries = deliveryList.filter(row => row[4]) // only rows with coords
-    .map((row, index) => {
-      const [lat, lng] = row[4].split(",").map(Number);
-      return {
-        id: index + 1, // optional, remove if not needed
-        lat,
-        lng
-      };
-    });
-  // 1) initial clusters (by distance-from-base batching)
-  let clusters = clusterDeliveriesByDistanceFromBase(deliveries, { lat: 17.4575596, lng: 78.3052356 }, 18);
-  // 2) local improvement across clusters (relocate/swap)
-  clusters = improveClusters(clusters, { lat: 17.4575596, lng: 78.3052356 }, 18);
-  // 3) finalize: compute optimized route for each improved cluster
-  const trips = clusters.map((cluster) => {
-    const route = optimizedRoute([{ lat: 17.4575596, lng: 78.3052356 }, ...cluster, { lat: 17.4575596, lng: 78.3052356 }]);
-    const path = route.map(p => `${p.lat},${p.lng}`).join("/");
-    const optimizedLocationsMapUrl = config.allLocationsMapUrl + '/' + path;
-    // config.allLocationsMapUrl
-    const dist = routeDistance(route);
-    return { route, distanceKm: dist, deliveries: cluster.map(d => d.id), optimizedLocationsMapUrl };
-  });
-  const totalKm = trips.reduce((s, t) => s + t.distanceKm, 0);
-  console.log(`Planned ${trips.length} trips — total distance ${totalKm.toFixed(2)} km`);
-  return trips;
+export async function generateClusters(params) {
+  try {
+    let ranges = `Orders!A2:R`
+    const dataFromSheet = await readSheetinSequence(ranges, CUSTOMERSSHEET_ID);
+    // const formattedData = parseRows(dataFromSheet, 'OptiPath');
+    const [waypoints, distances] = dataFromSheet.reduce(
+      ([a, b], item) => {
+        a.push(item[4]);
+        b.push(Number(item[17]));
+        return [a, b];
+      },
+      [[], []]
+    );
+   const clustersData = await clusterWaypointsPython(
+      {
+        depot: config.baseCoords,
+        waypoints,
+        distances,
+        num_clusters: Number(params.numClusters),
+        min_per_cluster: Number(params.minPerCluster),
+        max_per_cluster: Number(params.maxPerCluster)
+      })
+    return {clusters:clustersData.cluster_ids};
+  } catch (err) {
+    console.error('Error Generating Clusters:', err);
+    throw err;
+  }
 }
-
 
 export async function getOptimizedTrips() {
   try {

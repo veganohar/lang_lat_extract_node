@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get("/getCustomers", async (req, res) => {
   try {
-    const range = "Sheet1!A2:E"
+    const range = "Sheet1!A2:F"
     const rows = await getCustomers(range);
     res.status(200).json({ data: rows });
   } catch (error) {
