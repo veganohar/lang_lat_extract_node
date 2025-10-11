@@ -16,7 +16,7 @@ router.get("/getCustomers", async (req, res) => {
 
 router.post("/createCustomer", async (req, res) => {
   try {
-    const range = "Sheet1!A:E";
+    const range = "Sheet1!A:F";
     const rows = await createCustomer(range, req.body);
     res.status(200).json({ data: rows, status: 200, message: "New Customer Created Successfully!" });
   } catch (error) {

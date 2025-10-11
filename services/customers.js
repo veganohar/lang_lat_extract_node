@@ -27,7 +27,7 @@ export async function deleteCustomer(rowNumber) {
 
 export async function updateCustomer(cData, rowNumber) {
     const custData = await prepareCustomerData(cData);
-    const range = `Sheet1!A${rowNumber}:E${rowNumber}`
+    const range = `Sheet1!A${rowNumber}:F${rowNumber}`
     const response = await updateRow(CUSTOMERSSHEET_ID, range, custData);
     return response;
 }
