@@ -1,5 +1,5 @@
 import express from "express";
-import { getCustomers, createCustomer, deleteCustomer, updateCustomer } from "../services/customers.js";
+import { getCustomers, createCustomer, deleteCustomer, updateCustomer, customerListToMsg } from "../services/customers.js";
 
 const router = express.Router();
 
@@ -11,6 +11,16 @@ router.get("/getCustomers", async (req, res) => {
   } catch (error) {
     console.error("❌ Error Fetching Customers Data:", error);
     res.status(500).json({ error: "Failed Fetching Customersa Data" });
+  }
+});
+
+router.get("/customerListToMsg", async (req, res) => {
+  try {
+    const rows = await customerListToMsg();
+    res.status(200).json({ data: rows });
+  } catch (error) {
+    console.error("❌ Error Fetching Customers List:", error);
+    res.status(500).json({ error: "Failed Fetching Customersa List" });
   }
 });
 

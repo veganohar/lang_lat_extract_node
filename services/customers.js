@@ -14,6 +14,17 @@ export async function getCustomers(range) {
     return customersData;
 }
 
+export async function customerListToMsg() {
+    const cList = await readSheetinSequence("Sheet1!A2:F", CUSTOMERSSHEET_ID);
+    const oList = await readSheetinSequence("Orders!A2:B", CUSTOMERSSHEET_ID);
+    const makeKey = ([n, p]) => `${n.trim().toLowerCase()}|${p.trim()}`;
+    const set2 = new Set(oList.map(makeKey));
+    const data = cList.filter(a => !set2.has(makeKey(a)))
+        .filter((v, i, s) => s.findIndex(x => makeKey(x) === makeKey(v)) === i)
+        .map(([name, phone, address, mapUrl, latLng, distance], index) => ({ id: index + 1, name, phone, address, mapUrl, latLng, distance: Number(distance) }));
+    return data;
+}
+
 export async function createCustomer(range, cData) {
     const custData = await prepareCustomerData(cData);
     const response = await writeToSheet(range, [custData], CUSTOMERSSHEET_ID);
