@@ -162,8 +162,8 @@ export function calculateTripSchedule(legs, startTime, bufferMinutes) {
     };
 }
 
-export function parseRows(data,sourceFn) {
-    const rows = sourceFn=='deliveryPlanner'?data.map(v => v.values?.[0] || []):data;
+export function parseRows(data, sourceFn) {
+    const rows = sourceFn == 'deliveryPlanner' ? data.map(v => v.values?.[0] || []) : data;
     return rows.map(row => {
         const [
             name, phone, address, location, coords, curd,
@@ -174,13 +174,16 @@ export function parseRows(data,sourceFn) {
         flavorKeys.forEach((key, idx) => {
             flavorValues[key] = rest[idx] || ""; // safe fallback
         });
-        const comments = rest[flavorKeys.length+1] || ""; 
-        const distance = Number(rest[flavorKeys.length+2]);
         const amount = Number(rest[flavorKeys.length])
+        const comments = rest[flavorKeys.length + 1] || "";
+        const distance = Number(rest[flavorKeys.length + 2]);
+        const payment = Number(rest[flavorKeys.length + 3]);
+        const status = Number(rest[flavorKeys.length + 4]);
+        const balance = payment ? 0 : amount;
         return {
             name, phone, address, location, coords, curd,
             ...flavorValues, // spread flavors dynamically
-            amount, comments, distance
+            amount, comments, distance, payment, status, balance
         };
     });
 }
@@ -215,6 +218,7 @@ function buildOrderMessage(c, i, eta) {
     if (c.amount) {
         lines.push(`💰 *Amount*: *${c.amount}*`);
     }
+    lines.push(`💵 *Balance*: *${c.balance}*`);
     if (c.comments) {
         lines.push(`📝 *Note*: *${c.comments}*`);
     }
@@ -229,27 +233,29 @@ function buildOrderMessage(c, i, eta) {
 // }
 
 export function buildOrdersMessage(orderedData, etas, chunkSize = 10) {
-  const messages = orderedData.map((c, i) => {
-    const eta = etas.stops[i] || {};
-    return buildOrderMessage(c, i, eta);
-  });
-  // Split into chunks of `chunkSize`
-  const ordersMessage = [];
-  for (let i = 0; i < messages.length; i += chunkSize) {
-    ordersMessage.push(messages.slice(i, i + chunkSize).join("\n\n"));
-  }
-  return ordersMessage; // array of message chunks
+    const messages = orderedData.map((c, i) => {
+        const eta = etas.stops[i] || {};
+        return buildOrderMessage(c, i, eta);
+    });
+    // Split into chunks of `chunkSize`
+    const ordersMessage = [];
+    for (let i = 0; i < messages.length; i += chunkSize) {
+        ordersMessage.push(messages.slice(i, i + chunkSize).join("\n\n"));
+    }
+    return ordersMessage; // array of message chunks
 }
 
 
 export function buildSummary(etas, orderedData) {
     let totalCurd = 0;
     let totalAmount = 0;
+    let totalBalance = 0;
     const flavorTotals = {};
     flavorKeys.forEach(k => (flavorTotals[k] = 0));
     orderedData.forEach(c => {
         if (c.curd) totalCurd += Number(c.curd);
         totalAmount += c.amount || 0;
+        totalBalance += c.balance || 0;
         flavorKeys.forEach(k => {
             if (c[k]) flavorTotals[k] += Number(c[k]);
         });
@@ -262,15 +268,17 @@ export function buildSummary(etas, orderedData) {
 ⏰ *Total Time*: *${etas.totalTime}*
 🥛 *Total Curd*: *${totalCurd}*
 🍨 *Icecreams*: *${flavorsLine || "-"}*
-💰 *Total Amount*: *${totalAmount}*`;
+💰 *Total Amount*: *${totalAmount}*
+💵 *Total Balance*: *${totalBalance}*`;
+
     const summaryObject = {
         totalDistance: etas.totalDistance,
         totalTime: etas.totalTime,
         totalCurd,
         icecreams: flavorsLine,
-        totalAmount
+        totalAmount, totalBalance
     }
-    return {summaryText,summaryObject};
+    return { summaryText, summaryObject };
 }
 
 

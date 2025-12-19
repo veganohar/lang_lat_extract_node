@@ -11,7 +11,7 @@ const CUSTOMERSSHEET_ID = config.customersSheetId;
 export async function deliveryPlanner(rowIds, stTime, avgDelay) {
   // prepare ranges
   const idsArray = rowIds.split(",");
-  const ranges = idsArray.map(id => `Orders!A${id}:R${id}`);
+  const ranges = idsArray.map(id => `Orders!A${id}:T${id}`);
   // fetch sheet data
   const data = await readSheetinRanges(ranges, CUSTOMERSSHEET_ID);
   // format rows
@@ -41,8 +41,7 @@ export async function deliveryPlanner(rowIds, stTime, avgDelay) {
     optimizedLocationsMapUrl,
     whatsappMessage,
     orderedData,
-    summary: summaryObject,
-    data
+    summary: summaryObject
   };
 }
 
