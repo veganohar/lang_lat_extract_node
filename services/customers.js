@@ -8,8 +8,8 @@ const CUSTOMERSSHEET_ID = config.customersSheetId;
 
 export async function getCustomers(range) {
     const data = await readSheetinSequence(range, CUSTOMERSSHEET_ID);
-    const customersData = data.map(([name, phone, address, mapUrl, latLng, distance], index) => (
-        { id: index + 1, name, phone, address, mapUrl, latLng, distance: Number(distance) }
+    const customersData = data.map(([name, phone, address, mapUrl, latLng, distance,comments,subscription], index) => (
+        { id: index + 1, name, phone, address, mapUrl, latLng, distance: Number(distance),comments,subscription:Number(subscription) }
     ));
     return customersData;
 }
@@ -38,7 +38,7 @@ export async function deleteCustomer(rowNumber) {
 
 export async function updateCustomer(cData, rowNumber) {
     const custData = await prepareCustomerData(cData);
-    const range = `Sheet1!A${rowNumber}:F${rowNumber}`
+    const range = `Sheet1!A${rowNumber}:H${rowNumber}`
     const response = await updateRow(CUSTOMERSSHEET_ID, range, custData);
     return response;
 }
@@ -48,7 +48,7 @@ async function prepareCustomerData(cData) {
     const distancesData = await getTwoWheelerDistances([coordsData.coords]);
     const distanceMeters = distancesData[0].distanceMeters;
     const mergedData = { ...cData, ...coordsData, distanceMeters };
-    const keys = ["name", "phone", "address", "mapUrl", "coords", "distanceMeters"];
+    const keys = ["name", "phone", "address", "mapUrl", "coords", "distanceMeters","comments","subscription"];
     const custData = keys.map(key => mergedData[key]);
     return custData;
 }

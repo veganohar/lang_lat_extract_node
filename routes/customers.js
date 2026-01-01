@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get("/getCustomers", async (req, res) => {
   try {
-    const range = "Sheet1!A2:F"
+    const range = "Sheet1!A2:H"
     const rows = await getCustomers(range);
     res.status(200).json({ data: rows });
   } catch (error) {
@@ -26,7 +26,7 @@ router.get("/customerListToMsg", async (req, res) => {
 
 router.post("/createCustomer", async (req, res) => {
   try {
-    const range = "Sheet1!A:F";
+    const range = "Sheet1!A:H";
     const rows = await createCustomer(range, req.body);
     res.status(200).json({ data: rows, status: 200, message: "New Customer Created Successfully!" });
   } catch (error) {
