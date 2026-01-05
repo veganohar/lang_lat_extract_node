@@ -1,5 +1,5 @@
 import express from "express";
-import { newOrder, getOrders, deleteOrder, bulkDeleteOrders, updateOrder } from "../services/orders.js";
+import { newOrder, getOrders, deleteOrder, bulkDeleteOrders, updateOrder, createSubscriptionOrders } from "../services/orders.js";
 
 const router = express.Router();
 
@@ -32,6 +32,16 @@ router.put("/updateOrder/:rowNumber", async (req, res) => {
   } catch (error) {
     console.error("❌ Error Updating Order Data:", error);
     res.status(500).json({ error: "Failed Updating Order Data" });
+  }
+});
+
+router.post("/createSubscriptionOrders", async (req, res) => {
+  try {
+     const resp = await createSubscriptionOrders();
+    res.status(200).json({data:resp, status:200, message:"Subscription Orders Created Successfully!" });
+  } catch (error) {
+    console.error("❌ Error Creating Subscription Orders:", error);
+    res.status(500).json({ error: "Failed Creating Subscription Orders" });
   }
 });
 
