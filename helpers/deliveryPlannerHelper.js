@@ -44,7 +44,7 @@ async function directionsAPI(waypoints) {
         .replace("{origin}", config.baseCoords)
         .replace("{destination}", config.baseCoords)
         .replace("{waypoints}", waypoints.join("|"))
-        .replace("{key}", config.googleMapAPIKey);
+        .replace("{key}", process.env.GOOGLE_MAP_API_KEY);
 
     const res = await fetch(url);
     const data = await res.json();
@@ -82,7 +82,7 @@ async function routesAPI(waypoints) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-Goog-Api-Key": config.googleMapAPIKey,
+            "X-Goog-Api-Key": process.env.GOOGLE_MAP_API_KEY,
             "X-Goog-FieldMask": "routes.optimizedIntermediateWaypointIndex,routes.distanceMeters,routes.duration,routes.legs.startLocation,routes.legs.endLocation,routes.legs.distanceMeters,routes.legs.duration"
         },
         body: JSON.stringify(body)

@@ -1,0 +1,14 @@
+  {
+    "customersSheetId": "1Is191Zr-VkQTrmQJ35QGyxnthzkn6NIIoZwr1avVwHY",
+    "salesSheetId": "1UkOLyzQeGYC1A1SqkWN16m-JCR5y8A5aRZz0naWVuQU",
+    "ordersSheetGid": "1873546349",
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets"
+    ],
+    "allLocationsMapUrl": "https://www.google.com/maps/dir",
+    "baseCoords": "17.4575596,78.3052356",
+    "baseLat": "17.4575596",
+    "baseLng": "78.3052356",
+    "directionsUrl": "https://maps.googleapis.com/maps/api/directions/json?origin={origin}&destination={destination}&waypoints=optimize:true|{waypoints}&key={key}",
+    "routesUrl": "https://routes.googleapis.com/directions/v2:computeRoutes"
+  }

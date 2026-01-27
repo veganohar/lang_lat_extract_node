@@ -26,7 +26,7 @@ export async function optimizeDeliveries(locations, numVehicles) {
     for (const destinations of destBatches) {
       const originsStr = origins.map(i => `${locations[i][0]},${locations[i][1]}`).join('|');
       const destStr = destinations.map(i => `${locations[i][0]},${locations[i][1]}`).join('|');
-      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originsStr}&destinations=${destStr}&key=${config.googleMapAPIKey}&mode=bycycling`;
+      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originsStr}&destinations=${destStr}&key=${process.env.GOOGLE_MAP_API_KEY}&mode=bycycling`;
       const res = await fetch(url);
       const data = await res.json();
       if (!data.rows || data.rows.length === 0) {

@@ -20,7 +20,7 @@ export async function getTwoWheelerDistances(coords) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Goog-Api-Key': config.googleMapAPIKey,
+                'X-Goog-Api-Key': process.env.GOOGLE_MAP_API_KEY,
                             "X-Goog-FieldMask": "routes.optimizedIntermediateWaypointIndex,routes.distanceMeters,routes.duration,routes.legs.startLocation,routes.legs.endLocation,routes.legs.distanceMeters,routes.legs.duration"
             },
             body: JSON.stringify(payload)
