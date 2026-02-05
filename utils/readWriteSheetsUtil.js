@@ -97,3 +97,25 @@ export async function updateRow(spreadsheetId, range, values) {
 
     return response.data;
 }
+
+export async function updateSingleColumnMultipleRows(
+    sheetName,
+    spreadsheetId,
+    columnLetter,      // e.g. "G"
+    rowIds,        // [{ row: 3, value: 1 }, { row: 8, value: 0 }]
+    statusValue
+) {
+    const sheets = await getSheetsClient();
+    const data = rowIds.map((row) => ({
+        range: `${sheetName}!${columnLetter}${Number(row)}`,
+        values: [[statusValue]] // always 2D
+    }));
+    const response = await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+            valueInputOption: "RAW",
+            data: data
+        }
+    });
+    return response.data;
+}

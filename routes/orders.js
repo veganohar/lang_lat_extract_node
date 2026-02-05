@@ -1,5 +1,5 @@
 import express from "express";
-import { newOrder, getOrders, deleteOrder, bulkDeleteOrders, updateOrder, createSubscriptionOrders } from "../services/orders.js";
+import { newOrder, getOrders, deleteOrder, bulkDeleteOrders, updateOrder, createSubscriptionOrders, updateOrderStatus } from "../services/orders.js";
 
 const router = express.Router();
 
@@ -62,6 +62,16 @@ router.delete("/bulkDelete/:rowNumbers", async (req, res) => {
   } catch (error) {
     console.error("❌ Error Deleting Orders Data:", error);
     res.status(500).json({ error: "Failed Deleting Orders Data" });
+  }
+});
+
+router.put("/updateOrderStatus", async (req, res) => {
+  try {
+    const rows = await updateOrderStatus(req.body);
+    res.status(200).json({ data: rows, status:200, message:" Order Status Updated Successfully!" });
+  } catch (error) {
+    console.error("❌ Error Updating Order Status:", error);
+    res.status(500).json({ error: "Failed Updating Order Status" });
   }
 });
 

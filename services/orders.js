@@ -1,5 +1,5 @@
 import { readFile } from "fs/promises";
-import { writeToSheet, readSheetinSequence, deleteRow, deleteRows, updateRow } from "../utils/readWriteSheetsUtil.js";
+import { writeToSheet, readSheetinSequence, deleteRow, deleteRows, updateRow, updateSingleColumnMultipleRows } from "../utils/readWriteSheetsUtil.js";
 import { getCustomers } from "./customers.js";
 
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
@@ -34,37 +34,37 @@ export async function updateOrder(oData, rowNumber) {
 }
 
 export async function createSubscriptionOrders() {
-  const readRange = "Sheet1!A2:H";
-  const cust_data = await getCustomers(readRange);
-  const subscriptionOrders = cust_data.reduce((acc, obj) => {
-    const sub = Number(obj.subscription);
+    const readRange = "Sheet1!A2:H";
+    const cust_data = await getCustomers(readRange);
+    const subscriptionOrders = cust_data.reduce((acc, obj) => {
+        const sub = Number(obj.subscription);
 
-    if (sub > 0) {
-      acc.push([
-        obj.name,
-        obj.phone,
-        obj.address,
-        obj.mapUrl,
-        obj.latLng,
-        sub,                 // curd
-        0, 0, 0, 0, 0, 0, 0, 0, 0,   // ice creams
-        sub * 130,           // amount
-        "",                  // comments
-        obj.distance,
-        0,                   // payment
-        1                    // status
-      ]);
-    }
-    return acc;
-  }, []);
-  const writeRange = "Orders!A2:T";
-  const response = await writeToSheet(
-    writeRange,
-    subscriptionOrders,
-    CUSTOMERSSHEET_ID
-  );
+        if (sub > 0) {
+            acc.push([
+                obj.name,
+                obj.phone,
+                obj.address,
+                obj.mapUrl,
+                obj.latLng,
+                sub,                 // curd
+                0, 0, 0, 0, 0, 0, 0, 0, 0,   // ice creams
+                sub * 130,           // amount
+                "",                  // comments
+                obj.distance,
+                0,                   // payment
+                1                    // status
+            ]);
+        }
+        return acc;
+    }, []);
+    const writeRange = "Orders!A2:T";
+    const response = await writeToSheet(
+        writeRange,
+        subscriptionOrders,
+        CUSTOMERSSHEET_ID
+    );
 
-  return response;
+    return response;
 }
 
 export async function deleteOrder(rowNumber) {
@@ -76,6 +76,19 @@ export async function bulkDeleteOrders(rowNumbers) {
     const rowNumbersArray = rowNumbers.split(",").map(Number);
     const sortedRows = [...rowNumbersArray].sort((a, b) => b - a);
     const response = await deleteRows(CUSTOMERSSHEET_ID, config.ordersSheetGid, sortedRows);
+    return response;
+}
+
+export async function updateOrderStatus(body) {
+    const column = body.statusType == "payment" ? "S" : "T";
+    const rowIds = body.rowIds;
+    const statusValue = body.statusValue;
+
+    // const rowValueMap = rowIds.map(row => ({
+    //     row,
+    //     value:statusValue
+    // }));
+    const response = await updateSingleColumnMultipleRows("Orders",CUSTOMERSSHEET_ID, column, rowIds, statusValue);
     return response;
 }
 
