@@ -48,10 +48,11 @@ export async function deliveryPlanner(rowIds, stTime, avgDelay) {
 
 export async function generateClusters(params) {
   try {
+    const sortedOrderIds = JSON.parse(params.orderIds).sort((a, b) => a - b)
     let ranges = `Orders!A2:R`
     const dataFromSheet = await readSheetinSequence(ranges, CUSTOMERSSHEET_ID);
-    // const formattedData = parseRows(dataFromSheet, 'OptiPath');
-    const [waypoints, distances] = dataFromSheet.reduce(
+    const sortedDataFromSheet = sortedOrderIds.map(i => dataFromSheet[i - 1]);
+    const [waypoints, distances] = sortedDataFromSheet.reduce(
       ([a, b], item) => {
         a.push(item[4]);
         b.push(Number(item[17]));
@@ -68,7 +69,11 @@ export async function generateClusters(params) {
         min_per_cluster: Number(params.minPerCluster),
         max_per_cluster: Number(params.maxPerCluster)
       })
-    return {clusters:clustersData.cluster_ids};
+    const mappedClusters = clustersData.cluster_ids.map(cluster =>
+      cluster.map(index => (sortedOrderIds[index] - 1))
+    );
+    return { clusters: mappedClusters };
+
   } catch (err) {
     console.error('Error Generating Clusters:', err);
     throw err;
