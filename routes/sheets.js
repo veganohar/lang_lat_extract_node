@@ -1,5 +1,5 @@
 import express from "express";
-import { readSheet, synchDistances, writeLatLng } from "../services/sheets.js";
+import { readSheet, synchDistances, writeLatLng, getPrices } from "../services/sheets.js";
 
 const router = express.Router();
 
@@ -34,6 +34,16 @@ router.get("/synchDistances", async (req, res) => {
   } catch (error) {
     console.error("❌ Error Synching Distances:", error);
     res.status(500).json({ error: "Failed Synching Distances" });
+  }
+});
+
+router.get("/getPrices", async (req, res) => {
+  try {
+    const rows = await getPrices();
+    res.status(200).json({ data: rows });
+  } catch (error) {
+    console.error("❌ Error Getting Pricing Info:", error);
+    res.status(500).json({ error: "Failed Getting Pricing Info" });
   }
 });
 

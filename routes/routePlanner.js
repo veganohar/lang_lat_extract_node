@@ -17,7 +17,7 @@ router.get("/deliveryPlanner/:rowIds/:startTime/:avgDelay", async (req, res) => 
 
 
 // OptiPath/:startTime/:avgDelay/:numClusters/:minPerCluster/:maxPerCluster
-router.get("/generateClusters/:numClusters/:minPerCluster/:maxPerCluster", async (req, res) => {
+router.get("/generateClusters/:numClusters/:minPerCluster/:maxPerCluster/:orderIds", async (req, res) => {
   try {
     const rows = await generateClusters(req.params);
     res.json({ data: rows });
