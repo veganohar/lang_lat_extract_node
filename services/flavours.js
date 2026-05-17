@@ -48,9 +48,11 @@ function sumOrders(data) {
         return totals;
     }
     for (let i = 1; i < data.length; i++) {
+        if(data[i][14]!=3){
         data[i].forEach((val, colIndex) => {
             totals[headers[colIndex]] += Number(val) || 0;
         });
+        }
     }
     return totals;
 }
