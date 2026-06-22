@@ -1,6 +1,6 @@
 
 import { readFile } from "fs/promises";
-
+import { getAccessToken } from "../utils/googleAuth.js";
 const config = JSON.parse(
     await readFile(new URL("../config/config.json", import.meta.url))
 );
@@ -32,7 +32,7 @@ function formatTotalTime(totalMins) {
 
 // ---- Core functions ----
 export async function optimizeRoute(waypoints) {
-    const { optimizedIndexes, legs } = await routesAPI(waypoints);
+    const { optimizedIndexes, legs } = await routeOptimizationAPI(waypoints);
     const waypointsPath = optimizedIndexes.map(i => `/${waypoints[i]}`).join("");
     const optimizedLocationsMapUrl = `${config.allLocationsMapUrl}/${config.baseCoords}${waypointsPath}/${config.baseCoords}`;
     return { optimizedIndexes, optimizedLocationsMapUrl, legs };
@@ -102,6 +102,61 @@ async function routesAPI(waypoints) {
         distance: (leg.distanceMeters / 1000).toFixed(1)
     }));
     return { optimizedIndexes, legs }
+}
+
+async function routeOptimizationAPI(waypoints) {
+    const accessToken = await getAccessToken();
+    const shipments = waypoints.map(c => {
+        const [latitude, longitude] = c.split(",").map(Number);
+        return {
+            deliveries: [
+                { arrivalLocation: { latitude, longitude } }
+            ]
+        };
+    });
+    const body = {
+        model: {
+            vehicles: [{
+                startLocation: { latitude: config.baseLat, longitude: config.baseLng },
+                endLocation: { latitude: config.baseLat, longitude: config.baseLng },
+                costPerKilometer: 1
+            }],
+            shipments
+        }
+    };
+    const url = config.routeOptimizationUrl.replace("{projectId}", process.env.GOOGLE_PROJECT_ID);
+    const response = await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify(body) }
+    );
+    if (!response.ok) {
+        console.error("Route Optimization API failed:", await response.text());
+        return { optimizedIndexes: [], legs: [] };
+    }
+
+    const data = await response.json();
+    const visits = data.routes?.[0]?.visits || [];
+    const allIndexes = new Set(
+        visits.map(v => v.shipmentIndex).filter(v => v !== undefined));
+    const optimizedIndexes = visits.map(v => {
+        if (v.shipmentIndex !== undefined) {
+            return v.shipmentIndex;
+        }
+        // find missing index
+        for (let i = 0; i < waypoints.length; i++) {
+            if (!allIndexes.has(i)) {
+                allIndexes.add(i);
+                return i;
+            }
+        }
+    });
+
+    const transitions = data.routes?.[0]?.transitions || [];
+    const legs = transitions.map((t, i) => ({
+        from: i === 0 ? "Origin" : waypoints[optimizedIndexes[i - 1]],
+        to: i < optimizedIndexes.length ? waypoints[optimizedIndexes[i]] : "Destination",
+        duration: Math.max(1, Math.floor(parseInt(t.travelDuration, 10) / 60)),
+        distance: (t.travelDistanceMeters / 1000).toFixed(1)
+    }));
+    return { optimizedIndexes, legs };
 }
 
 export function calculateTripSchedule(legs, startTime, bufferMinutes) {

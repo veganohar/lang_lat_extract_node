@@ -20,9 +20,10 @@
     "haversine-distance": "^1.2.4",
     "luxon": "^3.7.1",
     "ml-kmeans": "^6.0.0",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "openai": "^6.44.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.14"
   }
 }

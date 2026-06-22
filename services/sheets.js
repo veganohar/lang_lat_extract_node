@@ -45,7 +45,7 @@ export async function synchDistances(range) {
   const data = await readSheetinSequence(range, CUSTOMERSSHEET_ID);
   const coords = data.map(item => item[0]);
   const distancesData = await getTwoWheelerDistances(coords);
-  const distances = distancesData.map(item => item.distanceMeters);
+  const distances = distancesData.map(item => [item.distanceMeters]);
   const writeRange = "Sheet1!F2:F";
   await clearData(writeRange, CUSTOMERSSHEET_ID);
   return await writeToSheet(writeRange, distances, CUSTOMERSSHEET_ID);

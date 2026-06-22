@@ -1,4 +1,4 @@
-import { getSheetsClient } from "./getSheetsUtil.js";
+import { getSheetsClient } from "./googleAuth.js";
 
 // Write Values to a sheet
 export async function writeToSheet(range, values, sheetId) {

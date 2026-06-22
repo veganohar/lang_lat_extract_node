@@ -11,7 +11,7 @@ export async function getFlavours() {
     const [pricingData, stockData, ordersData] = await Promise.all([
         readSheetinSequence("Pricing!A3:H", SALESSHEET_ID),
         readSheetinSequence("Stock!A3:H11", SALESSHEET_ID),
-        readSheetinSequence("Orders!F:O", CUSTOMERSSHEET_ID),
+        readSheetinSequence("Orders!F:T", CUSTOMERSSHEET_ID),
     ]);
     const { flavours, curdOrderedCount } = combineFlavours(pricingData, stockData, ordersData);
     return { flavours, curdOrderedCount };
@@ -48,9 +48,11 @@ function sumOrders(data) {
         return totals;
     }
     for (let i = 1; i < data.length; i++) {
+        if(data[i][14]!=3){
         data[i].forEach((val, colIndex) => {
             totals[headers[colIndex]] += Number(val) || 0;
         });
+        }
     }
     return totals;
 }
