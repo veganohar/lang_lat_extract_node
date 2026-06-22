@@ -1,12 +1,18 @@
+import getOrdersTool from "./tools/getOrdersTool.js";
+
 const registry = new Map();
+
+registerTool(getOrdersTool);
 
 export function registerTool(tool) {
 
-    if (!tool.name) {
-        throw new Error("Tool name is required.");
-    }
-
     registry.set(tool.name, tool);
+
+}
+
+export function getTool(name) {
+
+    return registry.get(name);
 
 }
 
@@ -23,11 +29,5 @@ export function getToolSchemas() {
         parameters: tool.inputSchema
 
     }));
-
-}
-
-export function getTool(name) {
-
-    return registry.get(name);
 
 }

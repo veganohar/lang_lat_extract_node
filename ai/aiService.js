@@ -23,35 +23,29 @@ export async function processMessage(message) {
 
     logUser(message);
 
-    const input = [
+    let response = await client.responses.create({
 
-        {
+        model: "gpt-5-mini",
 
-            role: "system",
-            content: SYSTEM_PROMPT
+        input: [
 
-        },
+            {
+                role: "system",
+                content: SYSTEM_PROMPT
+            },
 
-        {
+            {
+                role: "user",
+                content: message
+            }
 
-            role: "user",
-            content: message
+        ],
 
-        }
+        tools: getToolSchemas()
 
-    ];
+    });
 
     while (true) {
-
-        const response = await client.responses.create({
-
-            model: "gpt-5-mini",
-
-            input,
-
-            tools: getToolSchemas()
-
-        });
 
         const toolCall = response.output.find(
 
@@ -81,15 +75,27 @@ export async function processMessage(message) {
 
         logToolResult(toolResult);
 
-        input.push(toolCall);
+        response = await client.responses.create({
 
-        input.push({
+            model: "gpt-5-mini",
 
-            type: "function_call_output",
+            previous_response_id: response.id,
 
-            call_id: toolCall.call_id,
+            input: [
 
-            output: JSON.stringify(toolResult)
+                {
+
+                    type: "function_call_output",
+
+                    call_id: toolCall.call_id,
+
+                    output: JSON.stringify(toolResult)
+
+                }
+
+            ],
+
+            tools: getToolSchemas()
 
         });
 
