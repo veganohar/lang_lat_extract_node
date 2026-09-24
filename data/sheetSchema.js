@@ -112,8 +112,3 @@ export const toSheetRow = (data, sheet) => {
   return row;
 };
 
-export const ORDER_LAST_COLUMN = getSheetField(ORDER_SHEET, "status").column;
-export const ORDER_STATUS_COLUMN = getSheetField(ORDER_SHEET, "status").column;
-export const ORDER_PAYMENT_COLUMN = getSheetField(ORDER_SHEET, "payment").column;
-export const ORDER_STATUS_INDEX_FROM_CURD =
-  toColumnNumber(ORDER_STATUS_COLUMN) - toColumnNumber(getSheetField(ORDER_SHEET, "curd").column);

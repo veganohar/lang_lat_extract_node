@@ -5,8 +5,7 @@ import { FLAVOUR_KEYS } from "../data/flavourKeys.js";
 import {
     CUSTOMER_SHEET,
     ORDER_SHEET,
-    ORDER_PAYMENT_COLUMN,
-    ORDER_STATUS_COLUMN,
+    getSheetField,
     mapSheetRow,
     toSheetRow,
     getSheetRange,
@@ -83,7 +82,9 @@ export async function bulkDeleteOrders(rowNumbers) {
 }
 
 export async function updateOrderStatus(body) {
-    const column = body.statusType == "payment" ? ORDER_PAYMENT_COLUMN : ORDER_STATUS_COLUMN;
+    const column = body.statusType == "payment"
+        ? getSheetField(ORDER_SHEET, "payment").column
+        : getSheetField(ORDER_SHEET, "status").column;
     const rowIds = body.rowIds;
     const statusValue = body.statusValue;
 

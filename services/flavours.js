@@ -5,7 +5,6 @@ import { metrics } from "../data/metrics.js";
 import { roundoffs } from "../data/roundoffs.js";
 import {
     ORDER_SHEET,
-    ORDER_STATUS_INDEX_FROM_CURD,
     PRICING_SHEET,
     STOCK_SHEET,
     getSheetRange,
@@ -56,13 +55,14 @@ function combineFlavours(pricingData, stockData, ordersData, idStart = 1) {
 
 function sumOrders(data) {
     const headers = data[0]; // first row = keys
+    const statusIndex = headers.indexOf("status");
     const totals = Object.fromEntries(headers.map(h => [h, 0]));
     if (data.length === 1) {
         // only header row, no orders
         return totals;
     }
     for (let i = 1; i < data.length; i++) {
-        if(data[i][ORDER_STATUS_INDEX_FROM_CURD] != 3){
+        if (data[i][statusIndex] != 3) {
         data[i].forEach((val, colIndex) => {
             totals[headers[colIndex]] += Number(val) || 0;
         });
