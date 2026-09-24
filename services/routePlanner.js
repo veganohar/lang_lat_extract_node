@@ -2,7 +2,6 @@ import { readFile } from "fs/promises";
 import { sendWhatsAppMessage } from '../utils/whatsAppUtil.js';
 import { optimizeRoute, calculateTripSchedule, parseRows, buildWaypoints, buildOrdersMessage, buildSummary } from '../helpers/deliveryPlannerHelper.js';
 import { readSheetinRanges, readSheetinSequence } from "../utils/readWriteSheetsUtil.js";
-import { optimizeDeliveries } from "../helpers/distanceMatrixHelper.js";
 import { clusterWaypointsPython } from "../helpers/clusterRoutesHelper.js";
 
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
@@ -80,20 +79,3 @@ export async function generateClusters(params) {
   }
 }
 
-export async function getOptimizedTrips() {
-  try {
-    let ranges = `Sheet1!E2:E101`
-    let locations = await readSheetinRanges(ranges, CUSTOMERSSHEET_ID)
-    let latLngs = locations[0].values.map((item) => item[0].split(","));
-    for (let i = latLngs.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [latLngs[i], latLngs[j]] = [latLngs[j], latLngs[i]];
-    }
-    latLngs.unshift(config.baseCoords.split(","));
-    const result = await optimizeDeliveries(latLngs, 5);
-    return result; // { trips, tripLinks }
-  } catch (err) {
-    console.error('Error optimizing deliveries:', err);
-    throw err;
-  }
-}

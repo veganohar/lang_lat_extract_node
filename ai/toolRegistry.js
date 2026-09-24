@@ -1,8 +1,9 @@
 import getOrdersTool from "./tools/getOrdersTool.js";
-
+import getCustomersTool from "./tools/getCustomersTool.js";
 const registry = new Map();
 
 registerTool(getOrdersTool);
+registerTool(getCustomersTool);
 
 export function registerTool(tool) {
 

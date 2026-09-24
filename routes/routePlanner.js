@@ -1,5 +1,5 @@
 import express from "express";
-import { deliveryPlanner, getOptimizedTrips, generateClusters } from "../services/routePlanner.js";
+import { deliveryPlanner,  generateClusters } from "../services/routePlanner.js";
 
 const router = express.Router();
 
@@ -26,15 +26,5 @@ router.get("/generateClusters/:numClusters/:minPerCluster/:maxPerCluster/:orderI
     res.status(500).json({ error: "Failed to Generating Clusters" });
   }
 })
-
-
-// router.get('/optimize', async (req, res) => {
-//   try {
-//     const result = await getOptimizedTrips();
-//     res.json({data:result});
-//   } catch (err) {
-//     res.status(500).json({ error: 'Failed to optimize deliveries' });
-//   }
-// });
 
 export default router;
