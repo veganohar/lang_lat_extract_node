@@ -1,12 +1,12 @@
 import express from "express";
 import { newOrder, getOrders, deleteOrder, bulkDeleteOrders, updateOrder, createSubscriptionOrders, updateOrderStatus } from "../services/orders.js";
-import { ORDER_LAST_COLUMN } from "../data/flavourKeys.js";
+import { ORDER_SHEET, getSheetRange } from "../data/sheetSchema.js";
 
 const router = express.Router();
 
 router.get("/getOrders", async (req, res) => {
   try {
-    const range = `Orders!A2:${ORDER_LAST_COLUMN}`;
+    const range = getSheetRange(ORDER_SHEET, { startRow: 2 });
     const rows = await getOrders(range);
     res.json({ data: rows });
   } catch (error) {
@@ -17,7 +17,7 @@ router.get("/getOrders", async (req, res) => {
 
 router.post("/newOrder", async (req, res) => {
   try {
-    const range = `Orders!A:${ORDER_LAST_COLUMN}`;
+    const range = getSheetRange(ORDER_SHEET);
     const rows = await newOrder(range,req.body);
     res.status(200).json({ data: rows, status:200, message:"New Order Created Successfully!" });
   } catch (error) {

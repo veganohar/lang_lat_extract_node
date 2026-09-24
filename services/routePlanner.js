@@ -3,6 +3,7 @@ import { sendWhatsAppMessage } from '../utils/whatsAppUtil.js';
 import { optimizeRoute, calculateTripSchedule, parseRows, buildWaypoints, buildOrdersMessage, buildSummary } from '../helpers/deliveryPlannerHelper.js';
 import { readSheetinRanges, readSheetinSequence } from "../utils/readWriteSheetsUtil.js";
 import { clusterWaypointsPython } from "../helpers/clusterRoutesHelper.js";
+import { ORDER_SHEET, getSheetRange, mapSheetRow } from "../data/sheetSchema.js";
 
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
 const CUSTOMERSSHEET_ID = config.customersSheetId;
@@ -10,7 +11,7 @@ const CUSTOMERSSHEET_ID = config.customersSheetId;
 export async function deliveryPlanner(rowIds, stTime, avgDelay) {
   // prepare ranges
   const idsArray = rowIds.split(",");
-  const ranges = idsArray.map(id => `Orders!A${id}:T${id}`);
+  const ranges = idsArray.map((id) => getSheetRange(ORDER_SHEET, { startRow: id, endRow: id }));
   // fetch sheet data
   const data = await readSheetinRanges(ranges, CUSTOMERSSHEET_ID);
   // format rows
@@ -48,13 +49,13 @@ export async function deliveryPlanner(rowIds, stTime, avgDelay) {
 export async function generateClusters(params) {
   try {
     const sortedOrderIds = JSON.parse(params.orderIds).sort((a, b) => a - b)
-    let ranges = `Orders!A2:R`
+    const ranges = getSheetRange(ORDER_SHEET, { startRow: 2 });
     const dataFromSheet = await readSheetinSequence(ranges, CUSTOMERSSHEET_ID);
-    const sortedDataFromSheet = sortedOrderIds.map(i => dataFromSheet[i - 1]);
+    const sortedDataFromSheet = sortedOrderIds.map((i) => mapSheetRow(dataFromSheet[i - 1], ORDER_SHEET));
     const [waypoints, distances] = sortedDataFromSheet.reduce(
       ([a, b], item) => {
-        a.push(item[4]);
-        b.push(Number(item[17]));
+        a.push(item.latLng);
+        b.push(item.distance);
         return [a, b];
       },
       [[], []]

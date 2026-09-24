@@ -1,0 +1,96 @@
+import { FLAVOUR_KEYS } from "./flavourKeys.js";
+
+const toSpreadsheetColumn = (columnNumber) => {
+  let column = "";
+  let value = columnNumber;
+
+  while (value > 0) {
+    value -= 1;
+    column = String.fromCharCode(65 + (value % 26)) + column;
+    value = Math.floor(value / 26);
+  }
+
+  return column;
+};
+
+const toColumnNumber = (column) =>
+  [...column].reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0);
+
+const createSheetSchema = (name, fields) => Object.freeze({
+  name,
+  fields: Object.freeze(fields),
+});
+
+// Update this mapping when a Google Sheet column is renamed, moved, or added.
+// `key` is the application field; `header` documents the expected sheet header.
+export const CUSTOMER_SHEET = createSheetSchema("Sheet1", [
+  { key: "name", header: "Name", column: "A" },
+  { key: "phone", header: "Phone", column: "B" },
+  { key: "address", header: "Address", column: "C" },
+  { key: "mapUrl", header: "Location/Map", column: "D" },
+  { key: "latLng", header: "Lat,Lng", column: "E" },
+  { key: "distance", header: "Distance(Mts)", column: "F", type: "number" },
+  { key: "comments", header: "Comments", column: "G" },
+  { key: "subscription", header: "subscription", column: "H", type: "number" },
+]);
+
+const firstOrderFieldAfterFlavours = 7 + FLAVOUR_KEYS.length;
+
+export const ORDER_SHEET = createSheetSchema("Orders", [
+  { key: "name", header: "Name", column: "A" },
+  { key: "phone", header: "Mobile", column: "B" },
+  { key: "address", header: "Address", column: "C" },
+  { key: "mapUrl", header: "Location/Map", column: "D" },
+  { key: "latLng", header: "Lat,Lng", column: "E" },
+  { key: "curd", header: "Curd", column: "F", type: "number" },
+  ...FLAVOUR_KEYS.map((key, index) => ({
+    key,
+    header: key.toUpperCase(),
+    column: toSpreadsheetColumn(7 + index),
+    type: "number",
+  })),
+  { key: "amount", header: "Amount", column: toSpreadsheetColumn(firstOrderFieldAfterFlavours), type: "number" },
+  { key: "comments", header: "Comments", column: toSpreadsheetColumn(firstOrderFieldAfterFlavours + 1) },
+  { key: "distance", header: "Distance", column: toSpreadsheetColumn(firstOrderFieldAfterFlavours + 2), type: "number" },
+  { key: "payment", header: "Payment Status", column: toSpreadsheetColumn(firstOrderFieldAfterFlavours + 3), type: "number" },
+  { key: "status", header: "Order Status", column: toSpreadsheetColumn(firstOrderFieldAfterFlavours + 4), type: "number" },
+]);
+
+export const getSheetField = (sheet, key) => {
+  const field = sheet.fields.find((item) => item.key === key);
+  if (!field) throw new Error(`Unknown ${sheet.name} field: ${key}`);
+  return field;
+};
+
+export const getSheetRange = (sheet, { startRow = 1, endRow, fields = sheet.fields } = {}) => {
+  const columns = fields.map(({ column }) => toColumnNumber(column));
+  const startColumn = toSpreadsheetColumn(Math.min(...columns));
+  const endColumn = toSpreadsheetColumn(Math.max(...columns));
+  return `${sheet.name}!${startColumn}${startRow}:${endColumn}${endRow ?? ""}`;
+};
+
+export const mapSheetRow = (row, sheet) => {
+  const firstColumn = Math.min(...sheet.fields.map(({ column }) => toColumnNumber(column)));
+  return Object.fromEntries(
+    sheet.fields.map(({ key, column, type }) => {
+      const value = row[toColumnNumber(column) - firstColumn];
+      return [key, type === "number" ? Number(value) || 0 : value];
+    })
+  );
+};
+
+export const toSheetRow = (data, sheet) => {
+  const firstColumn = Math.min(...sheet.fields.map(({ column }) => toColumnNumber(column)));
+  const lastColumn = Math.max(...sheet.fields.map(({ column }) => toColumnNumber(column)));
+  const row = Array(lastColumn - firstColumn + 1).fill("");
+  sheet.fields.forEach(({ key, column }) => {
+    row[toColumnNumber(column) - firstColumn] = data[key] ?? "";
+  });
+  return row;
+};
+
+export const ORDER_LAST_COLUMN = getSheetField(ORDER_SHEET, "status").column;
+export const ORDER_STATUS_COLUMN = getSheetField(ORDER_SHEET, "status").column;
+export const ORDER_PAYMENT_COLUMN = getSheetField(ORDER_SHEET, "payment").column;
+export const ORDER_STATUS_INDEX_FROM_CURD =
+  toColumnNumber(ORDER_STATUS_COLUMN) - toColumnNumber(getSheetField(ORDER_SHEET, "curd").column);

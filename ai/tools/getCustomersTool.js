@@ -1,4 +1,5 @@
 import { getCustomers } from "../../services/customers.js";
+import { CUSTOMER_SHEET, getSheetRange } from "../../data/sheetSchema.js";
 
 export default {
 
@@ -18,7 +19,7 @@ export default {
 
     handler: async () => {
 
-        const customers = await getCustomers("Sheet1!A2:H");
+        const customers = await getCustomers(getSheetRange(CUSTOMER_SHEET, { startRow: 2 }));
 
         return customers;
 

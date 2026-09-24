@@ -3,7 +3,7 @@ import { readSheetinSequence } from "../utils/readWriteSheetsUtil.js";
 import { recipes } from "../data/recipes.js";
 import { metrics } from "../data/metrics.js";
 import { roundoffs } from "../data/roundoffs.js";
-import { ORDER_LAST_COLUMN, ORDER_STATUS_INDEX_FROM_CURD } from "../data/flavourKeys.js";
+import { ORDER_SHEET, ORDER_STATUS_INDEX_FROM_CURD, getSheetRange } from "../data/sheetSchema.js";
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
 const SALESSHEET_ID = config.salesSheetId;
 const CUSTOMERSSHEET_ID = config.customersSheetId;
@@ -12,7 +12,9 @@ export async function getFlavours() {
     const [pricingData, stockData, ordersData] = await Promise.all([
         readSheetinSequence("Pricing!A3:H", SALESSHEET_ID),
         readSheetinSequence("Stock!A3:H11", SALESSHEET_ID),
-        readSheetinSequence(`Orders!F:${ORDER_LAST_COLUMN}`, CUSTOMERSSHEET_ID),
+        readSheetinSequence(getSheetRange(ORDER_SHEET, {
+            fields: ORDER_SHEET.fields.filter(({ key }) => key !== "name" && key !== "phone" && key !== "address" && key !== "mapUrl" && key !== "latLng"),
+        }), CUSTOMERSSHEET_ID),
     ]);
     const { flavours, curdOrderedCount } = combineFlavours(pricingData, stockData, ordersData);
     return { flavours, curdOrderedCount };

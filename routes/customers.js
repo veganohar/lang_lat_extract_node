@@ -1,11 +1,12 @@
 import express from "express";
 import { getCustomers, createCustomer, deleteCustomer, updateCustomer, customerListToMsg } from "../services/customers.js";
+import { CUSTOMER_SHEET, getSheetRange } from "../data/sheetSchema.js";
 
 const router = express.Router();
 
 router.get("/getCustomers", async (req, res) => {
   try {
-    const range = "Sheet1!A2:H"
+    const range = getSheetRange(CUSTOMER_SHEET, { startRow: 2 });
     const rows = await getCustomers(range);
     res.status(200).json({ data: rows });
   } catch (error) {
@@ -26,7 +27,7 @@ router.get("/customerListToMsg", async (req, res) => {
 
 router.post("/createCustomer", async (req, res) => {
   try {
-    const range = "Sheet1!A:H";
+    const range = getSheetRange(CUSTOMER_SHEET);
     const rows = await createCustomer(range, req.body);
     res.status(200).json({ data: rows, status: 200, message: "New Customer Created Successfully!" });
   } catch (error) {

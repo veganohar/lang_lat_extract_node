@@ -2,6 +2,7 @@
 import { readFile } from "fs/promises";
 import { getAccessToken } from "../utils/googleAuth.js";
 import { FLAVOUR_KEYS } from "../data/flavourKeys.js";
+import { ORDER_SHEET, mapSheetRow } from "../data/sheetSchema.js";
 const config = JSON.parse(
     await readFile(new URL("../config/config.json", import.meta.url))
 );
@@ -221,25 +222,13 @@ export function calculateTripSchedule(legs, startTime, bufferMinutes) {
 export function parseRows(data, sourceFn) {
     const rows = sourceFn == 'deliveryPlanner' ? data.map(v => v.values?.[0] || []) : data;
     return rows.map(row => {
-        const [
-            name, phone, address, location, coords, curd,
-            ...rest // remaining columns (flavors + comments, etc.)
-        ] = row;
-        // Map flavor values dynamically
-        const flavorValues = {};
-        flavorKeys.forEach((key, idx) => {
-            flavorValues[key] = rest[idx] || ""; // safe fallback
-        });
-        const amount = Number(rest[flavorKeys.length])
-        const comments = rest[flavorKeys.length + 1] || "";
-        const distance = Number(rest[flavorKeys.length + 2]);
-        const payment = Number(rest[flavorKeys.length + 3]);
-        const status = Number(rest[flavorKeys.length + 4]);
-        const balance = payment ? 0 : amount;
+        const order = mapSheetRow(row, ORDER_SHEET);
+        const balance = order.payment ? 0 : order.amount;
         return {
-            name, phone, address, location, coords, curd,
-            ...flavorValues, // spread flavors dynamically
-            amount, comments, distance, payment, status, balance
+            ...order,
+            location: order.mapUrl,
+            coords: order.latLng,
+            balance,
         };
     });
 }

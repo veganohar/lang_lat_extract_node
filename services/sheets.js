@@ -2,13 +2,17 @@ import { readFile } from "fs/promises";
 import { expandUrlAndGetCoords } from '../utils/coordsUtil.js';
 import { writeToSheet, readSheetinSequence, clearData } from "../utils/readWriteSheetsUtil.js";
 import { getTwoWheelerDistances } from "../utils/findDistanceUtil.js";
+import { CUSTOMER_SHEET, getSheetField, getSheetRange } from "../data/sheetSchema.js";
 
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
 const CUSTOMERSSHEET_ID = config.customersSheetId;
 const SALESSHEET_ID = config.salesSheetId;
 // Write Lat and Lng to sheet
 export async function writeLatLng(range) {
-  const shortURLs = await readSheetinSequence("Sheet1!D2:D", CUSTOMERSSHEET_ID);
+  const shortURLs = await readSheetinSequence(getSheetRange(CUSTOMER_SHEET, {
+    startRow: 2,
+    fields: [getSheetField(CUSTOMER_SHEET, "mapUrl")],
+  }), CUSTOMERSSHEET_ID);
   const latLngs = await processUrls(shortURLs);
   await clearData(range, CUSTOMERSSHEET_ID);
   return await writeToSheet(range, latLngs, CUSTOMERSSHEET_ID);
@@ -46,7 +50,10 @@ export async function synchDistances(range) {
   const coords = data.map(item => item[0]);
   const distancesData = await getTwoWheelerDistances(coords);
   const distances = distancesData.map(item => [item.distanceMeters]);
-  const writeRange = "Sheet1!F2:F";
+  const writeRange = getSheetRange(CUSTOMER_SHEET, {
+    startRow: 2,
+    fields: [getSheetField(CUSTOMER_SHEET, "distance")],
+  });
   await clearData(writeRange, CUSTOMERSSHEET_ID);
   return await writeToSheet(writeRange, distances, CUSTOMERSSHEET_ID);
 }

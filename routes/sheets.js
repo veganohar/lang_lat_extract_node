@@ -1,11 +1,17 @@
 import express from "express";
 import { readSheet, synchDistances, writeLatLng, getPrices } from "../services/sheets.js";
+import { CUSTOMER_SHEET, getSheetField, getSheetRange } from "../data/sheetSchema.js";
+
+const customerLatLngRange = getSheetRange(CUSTOMER_SHEET, {
+  startRow: 2,
+  fields: [getSheetField(CUSTOMER_SHEET, "latLng")],
+});
 
 const router = express.Router();
 
 router.get("/writeLatLng", async (req, res) => {
   try {
-    const range = "Sheet1!E2:E"
+    const range = customerLatLngRange;
     const rows = await writeLatLng(range);
     res.json({ data: rows });
   } catch (error) {
@@ -16,7 +22,7 @@ router.get("/writeLatLng", async (req, res) => {
 
 router.get("/read", async (req, res) => {
   try {
-    const range = "Sheet1!E2:E"
+    const range = customerLatLngRange;
     const rows = await readSheet(range);
     res.json({ data: rows });
   } catch (error) {
@@ -28,7 +34,7 @@ router.get("/read", async (req, res) => {
 
 router.get("/synchDistances", async (req, res) => {
   try {
-    const range = "Sheet1!E2:E"
+    const range = customerLatLngRange;
     const rows = await synchDistances(range);
     res.status(200).json({ data: rows });
   } catch (error) {

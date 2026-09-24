@@ -1,4 +1,5 @@
 import { getOrders } from "../../services/orders.js";
+import { ORDER_SHEET, getSheetRange } from "../../data/sheetSchema.js";
 
 export default {
 
@@ -18,7 +19,7 @@ export default {
 
     handler: async () => {
 
-        const orders = await getOrders("Orders!A2:T");
+        const orders = await getOrders(getSheetRange(ORDER_SHEET, { startRow: 2 }));
 
         return orders;
 

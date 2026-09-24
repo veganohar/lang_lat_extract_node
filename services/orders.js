@@ -1,69 +1,66 @@
 import { readFile } from "fs/promises";
 import { writeToSheet, readSheetinSequence, deleteRow, deleteRows, updateRow, updateSingleColumnMultipleRows } from "../utils/readWriteSheetsUtil.js";
 import { getCustomers } from "./customers.js";
+import { FLAVOUR_KEYS } from "../data/flavourKeys.js";
 import {
-    FLAVOUR_KEYS,
-    ORDER_FIELDS,
-    ORDER_LAST_COLUMN,
+    CUSTOMER_SHEET,
+    ORDER_SHEET,
     ORDER_PAYMENT_COLUMN,
     ORDER_STATUS_COLUMN,
-} from "../data/flavourKeys.js";
+    mapSheetRow,
+    toSheetRow,
+    getSheetRange,
+} from "../data/sheetSchema.js";
 
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
 const CUSTOMERSSHEET_ID = config.customersSheetId;
 export async function getOrders(range) {
     const data = await readSheetinSequence(range, CUSTOMERSSHEET_ID);
-    const numericFields = new Set(["curd", ...FLAVOUR_KEYS, "amount", "distance", "payment", "status"]);
     const ordersData = data.map((row, index) => ({
         id: index + 1,
-        ...Object.fromEntries(
-            ORDER_FIELDS.map((field, fieldIndex) => [
-                field,
-                numericFields.has(field) ? Number(row[fieldIndex]) || 0 : row[fieldIndex],
-            ])
-        ),
+        ...mapSheetRow(row, ORDER_SHEET),
     }));
     return ordersData;
 }
 
 export async function newOrder(range, oData) {
-    const ordData = ORDER_FIELDS.map((key) => oData[key]);
+    const ordData = toSheetRow(oData, ORDER_SHEET);
     const response = await writeToSheet(range, [ordData], CUSTOMERSSHEET_ID);
     return response;
 }
 
 export async function updateOrder(oData, rowNumber) {
-    const ordData = ORDER_FIELDS.map((key) => oData[key]);
-    const range = `Orders!A${rowNumber}:${ORDER_LAST_COLUMN}${rowNumber}`
+    const ordData = toSheetRow(oData, ORDER_SHEET);
+    const range = getSheetRange(ORDER_SHEET, { startRow: rowNumber, endRow: rowNumber });
     const response = await updateRow(CUSTOMERSSHEET_ID, range, ordData);
     return response;
 }
 
 export async function createSubscriptionOrders() {
-    const readRange = "Sheet1!A2:H";
+    const readRange = getSheetRange(CUSTOMER_SHEET, { startRow: 2 });
     const cust_data = await getCustomers(readRange);
     const subscriptionOrders = cust_data.reduce((acc, obj) => {
         const sub = Number(obj.subscription);
 
         if (sub > 0) {
-            acc.push([
-                obj.name,
-                obj.phone,
-                obj.address,
-                obj.mapUrl,
-                obj.latLng,
-                sub,                 // curd
-                ...FLAVOUR_KEYS.map(() => 0), // ice creams
-                sub * 130,           // amount
-                "",                  // comments
-                obj.distance,
-                0,                   // payment
-                1                    // status
-            ]);
+            acc.push(toSheetRow({
+                name: obj.name,
+                phone: obj.phone,
+                address: obj.address,
+                mapUrl: obj.mapUrl,
+                latLng: obj.latLng,
+                curd: sub,
+                ...Object.fromEntries(FLAVOUR_KEYS.map((key) => [key, 0])),
+                amount: sub * 130,
+                comments: "",
+                distance: obj.distance,
+                payment: 0,
+                status: 1,
+            }, ORDER_SHEET));
         }
         return acc;
     }, []);
-    const writeRange = `Orders!A2:${ORDER_LAST_COLUMN}`;
+    const writeRange = getSheetRange(ORDER_SHEET, { startRow: 2 });
     const response = await writeToSheet(
         writeRange,
         subscriptionOrders,
