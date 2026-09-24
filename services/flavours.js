@@ -3,39 +3,50 @@ import { readSheetinSequence } from "../utils/readWriteSheetsUtil.js";
 import { recipes } from "../data/recipes.js";
 import { metrics } from "../data/metrics.js";
 import { roundoffs } from "../data/roundoffs.js";
-import { ORDER_SHEET, ORDER_STATUS_INDEX_FROM_CURD, getSheetRange } from "../data/sheetSchema.js";
+import {
+    ORDER_SHEET,
+    ORDER_STATUS_INDEX_FROM_CURD,
+    PRICING_SHEET,
+    STOCK_SHEET,
+    getSheetRange,
+    mapSheetRow,
+} from "../data/sheetSchema.js";
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
 const SALESSHEET_ID = config.salesSheetId;
 const CUSTOMERSSHEET_ID = config.customersSheetId;
 
 export async function getFlavours() {
     const [pricingData, stockData, ordersData] = await Promise.all([
-        readSheetinSequence("Pricing!A3:H", SALESSHEET_ID),
-        readSheetinSequence("Stock!A3:H11", SALESSHEET_ID),
+        readSheetinSequence(getSheetRange(PRICING_SHEET, { startRow: 3 }), SALESSHEET_ID),
+        readSheetinSequence(getSheetRange(STOCK_SHEET, { startRow: 3, endRow: 11 }), SALESSHEET_ID),
         readSheetinSequence(getSheetRange(ORDER_SHEET, {
             fields: ORDER_SHEET.fields.filter(({ key }) => key !== "name" && key !== "phone" && key !== "address" && key !== "mapUrl" && key !== "latLng"),
         }), CUSTOMERSSHEET_ID),
     ]);
-    const { flavours, curdOrderedCount } = combineFlavours(pricingData, stockData, ordersData);
+    const { flavours, curdOrderedCount } = combineFlavours(
+        pricingData.map((row) => mapSheetRow(row, PRICING_SHEET)),
+        stockData.map((row) => mapSheetRow(row, STOCK_SHEET)),
+        ordersData
+    );
     return { flavours, curdOrderedCount };
 }
 
 function combineFlavours(pricingData, stockData, ordersData, idStart = 1) {
-    const stockMap = Object.fromEntries(stockData.map(a => [a[0], a.slice(1).map(Number)]));
+    const stockMap = Object.fromEntries(stockData.map((stock) => [stock.shortName, stock]));
     const orders = sumOrders(ordersData);
-    const flavours = pricingData.map((pData, index) => {
-        const shortName = pData[1];
+    const flavours = pricingData.map((pricing, index) => {
+        const stock = stockMap[pricing.shortName] || {};
         return {
             id: idStart + index,
-            name: pData[0],
-            shortName,
+            name: pricing.name,
+            shortName: pricing.shortName,
             prices: {
-                "100ml": Number(pData[5]),
-                "500ml": Number(pData[6])
+                "100ml": pricing.sellingPrice100ml,
+                "500ml": pricing.sellingPrice500ml,
             },
             stock: {
-                "100ml": Number(stockMap[shortName][1]),
-                "500ml": Number(stockMap[shortName][2]) - Number(orders[shortName])
+                "100ml": stock.stock100ml || 0,
+                "500ml": (stock.stock500ml || 0) - Number(orders[pricing.shortName] || 0),
             },
         };
     });

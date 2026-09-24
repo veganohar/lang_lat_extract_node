@@ -56,6 +56,29 @@ export const ORDER_SHEET = createSheetSchema("Orders", [
   { key: "status", header: "Order Status", column: toSpreadsheetColumn(firstOrderFieldAfterFlavours + 4), type: "number" },
 ]);
 
+export const PRICING_SHEET = createSheetSchema("Pricing", [
+  { key: "name", header: "Flavour", column: "A" },
+  { key: "shortName", header: "Short Form", column: "B" },
+  { key: "mrp100ml", header: "MRP 100ml", column: "C", type: "number" },
+  { key: "mrp500ml", header: "MRP 500ml", column: "D", type: "number" },
+  { key: "mrp4L", header: "MRP 4L", column: "E", type: "number" },
+  { key: "sellingPrice100ml", header: "Selling Price 100ml", column: "F", type: "number" },
+  { key: "sellingPrice500ml", header: "Selling Price 500ml", column: "G", type: "number" },
+  { key: "sellingPrice4L", header: "Selling Price 4L", column: "H", type: "number" },
+]);
+
+// The main Stock Report table only. Its data rows are 3–11; other tables lower
+// on the tab are separate reports and intentionally excluded. The 50 ML column
+// is sometimes hidden in Google Sheets, but remains column B in the data.
+export const STOCK_SHEET = createSheetSchema("Stock", [
+  { key: "shortName", header: "Flavour", column: "A" },
+  { key: "stock50ml", header: "50 ML", column: "B", type: "number" },
+  { key: "stock100ml", header: "100 ML", column: "C", type: "number" },
+  { key: "stock500ml", header: "500 ML", column: "D", type: "number" },
+  { key: "stock4L", header: "4 L", column: "E", type: "number" },
+  { key: "stockLitres", header: "In Lts", column: "F", type: "number" },
+]);
+
 export const getSheetField = (sheet, key) => {
   const field = sheet.fields.find((item) => item.key === key);
   if (!field) throw new Error(`Unknown ${sheet.name} field: ${key}`);

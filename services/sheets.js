@@ -2,7 +2,7 @@ import { readFile } from "fs/promises";
 import { expandUrlAndGetCoords } from '../utils/coordsUtil.js';
 import { writeToSheet, readSheetinSequence, clearData } from "../utils/readWriteSheetsUtil.js";
 import { getTwoWheelerDistances } from "../utils/findDistanceUtil.js";
-import { CUSTOMER_SHEET, getSheetField, getSheetRange } from "../data/sheetSchema.js";
+import { CUSTOMER_SHEET, PRICING_SHEET, getSheetField, getSheetRange, mapSheetRow } from "../data/sheetSchema.js";
 
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
 const CUSTOMERSSHEET_ID = config.customersSheetId;
@@ -59,17 +59,20 @@ export async function synchDistances(range) {
 }
 
 export async function getPrices() {
-  const data = await readSheetinSequence("Pricing!A3:H", SALESSHEET_ID);
-  const prices = data.map((item, i) => ({
+  const data = await readSheetinSequence(getSheetRange(PRICING_SHEET, { startRow: 3 }), SALESSHEET_ID);
+  const prices = data.map((row, i) => {
+    const pricing = mapSheetRow(row, PRICING_SHEET);
+    return {
     id: i + 1,
-    name: item[0],
-    shortName: item[1],
+    name: pricing.name,
+    shortName: pricing.shortName,
     sizes: {
-      "100ml": { mrp: +item[2], sellingPrice: +item[5] },
-      "500ml": { mrp: +item[3], sellingPrice: +item[6] },
-      "4L": { mrp: +item[4], sellingPrice: +item[7] }
+      "100ml": { mrp: pricing.mrp100ml, sellingPrice: pricing.sellingPrice100ml },
+      "500ml": { mrp: pricing.mrp500ml, sellingPrice: pricing.sellingPrice500ml },
+      "4L": { mrp: pricing.mrp4L, sellingPrice: pricing.sellingPrice4L },
     }
-  }));
+  };
+  });
   return prices;
 }
 
