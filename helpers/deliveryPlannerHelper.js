@@ -1,10 +1,11 @@
 
 import { readFile } from "fs/promises";
 import { getAccessToken } from "../utils/googleAuth.js";
+import { FLAVOUR_KEYS } from "../data/flavourKeys.js";
 const config = JSON.parse(
     await readFile(new URL("../config/config.json", import.meta.url))
 );
-const flavorKeys = ["cc", "ce", "eb", "em", "ev", "gc", "lc", "mc", "ss"];
+const flavorKeys = FLAVOUR_KEYS;
 
 // ---- Helpers ----
 export function cleanAddress(address = "") {
