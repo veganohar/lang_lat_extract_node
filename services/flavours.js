@@ -18,7 +18,7 @@ const CUSTOMERSSHEET_ID = config.customersSheetId;
 export async function getFlavours() {
     const [pricingData, stockData, ordersData] = await Promise.all([
         readSheetinSequence(getSheetRange(PRICING_SHEET, { startRow: 3 }), SALESSHEET_ID),
-        readSheetinSequence(getSheetRange(STOCK_SHEET, { startRow: 3, endRow: 11 }), SALESSHEET_ID),
+        readSheetinSequence(getSheetRange(STOCK_SHEET, { startRow: 3, endRow: 12 }), SALESSHEET_ID),
         readSheetinSequence(getSheetRange(ORDER_SHEET, {
             fields: ORDER_SHEET.fields.filter(({ key }) => key !== "name" && key !== "phone" && key !== "address" && key !== "mapUrl" && key !== "latLng"),
         }), CUSTOMERSSHEET_ID),
