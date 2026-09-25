@@ -1,30 +1,30 @@
 export const PRODUCT_ICONS = Object.freeze({
-    curd: "🥛",
-    cheese: "🧀",
     butter: "🧈",
+    cheese: "🧀",
+    curd: "🥣",
     icecream: "🍨",
 });
 
 export const DELIVERY_ICONS = Object.freeze({
-    order: "🔢",
-    customer: "👤",
-    phone: "📞",
     address: "🏠",
-    location: "📍",
-    eta: "⏱",
-    distance: "📏",
-    duration: "⏰",
     amount: "💰",
     balance: "💵",
+    customer: "👤",
+    distance: "📏",
+    duration: "⏰",
+    eta: "⏱",
+    location: "📍",
     note: "📝",
-    totalDistance: "📏",
-    totalTime: "⏰",
+    order: "🔢",
+    phone: "📞",
     totalAmount: "💰",
     totalBalance: "💵",
+    totalDistance: "📏",
+    totalTime: "⏰",
 });
 
 export const SYSTEM_ICONS = Object.freeze({
-    started: "🚀",
     error: "❌",
     security: "🔐",
+    started: "🚀",
 });
