@@ -119,3 +119,16 @@ export async function updateSingleColumnMultipleRows(
     });
     return response.data;
 }
+
+export async function updateSingleColumnRowsWithValues(sheetName, spreadsheetId, columnLetter, rowValues) {
+    const sheets = await getSheetsClient();
+    const data = rowValues.map(({ row, value }) => ({
+        range: `${sheetName}!${columnLetter}${Number(row)}`,
+        values: [[value]],
+    }));
+    const response = await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+        requestBody: { valueInputOption: "RAW", data },
+    });
+    return response.data;
+}

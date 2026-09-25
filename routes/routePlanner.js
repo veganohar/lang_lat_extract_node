@@ -1,5 +1,5 @@
 import express from "express";
-import { deliveryPlanner,  generateClusters } from "../services/routePlanner.js";
+import { deliveryPlanner, generateClusters, planDeliveries } from "../services/routePlanner.js";
 
 const router = express.Router();
 
@@ -26,5 +26,15 @@ router.get("/generateClusters/:numClusters/:minPerCluster/:maxPerCluster/:orderI
     res.status(500).json({ error: "Failed to Generating Clusters" });
   }
 })
+
+router.post("/planDeliveries", async (req, res) => {
+  try {
+    const plan = await planDeliveries(JSON.stringify(req.body.orderIds || []));
+    res.json({ data: plan });
+  } catch (error) {
+    console.error("Error planning deliveries:", error.message, error.stack);
+    res.status(400).json({ error: error.message || "Failed to plan deliveries." });
+  }
+});
 
 export default router;
