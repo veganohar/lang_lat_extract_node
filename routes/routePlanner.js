@@ -10,7 +10,7 @@ router.get("/deliveryPlanner/:rowIds/:startTime/:avgDelay", async (req, res) => 
     const rows = await deliveryPlanner(p.rowIds, p.startTime, Number(p.avgDelay));
     res.json({ data: rows });
   } catch (error) {
-    console.error("❌ Error in Delivery Planner:", error.message, error.stack);
+    console.error("Error in Delivery Planner:", error.message, error.stack);
     res.status(500).json({ error: "Failed to generate delivery plan (shortest path and data)" });
   }
 })
@@ -22,7 +22,7 @@ router.get("/generateClusters/:numClusters/:minPerCluster/:maxPerCluster/:orderI
     const rows = await generateClusters(req.params);
     res.json({ data: rows });
   } catch (error) {
-    console.error("❌ Error in Generating Clusters:", error.message, error.stack);
+    console.error("Error in Generating Clusters:", error.message, error.stack);
     res.status(500).json({ error: "Failed to Generating Clusters" });
   }
 })

@@ -17,9 +17,11 @@ const googleCredentials = {
   universe_domain: "googleapis.com"
 };
 
-// 🔐 Fail fast if something critical is missing
+import { SYSTEM_ICONS } from "../data/iconConfig.js";
+
+// Fail fast if something critical is missing
 if (!googleCredentials.private_key || !googleCredentials.client_email) {
-  throw new Error("❌ Missing Google service account env variables");
+  throw new Error(`${SYSTEM_ICONS.error} Missing Google service account env variables`);
 }
 
 export default googleCredentials;

@@ -53,7 +53,7 @@ export async function deleteRow(spreadsheetId, sheetGid, rowNumber) {
                 {
                     deleteDimension: {
                         range: {
-                            sheetId: sheetGid,     // 👈 gid from the tab’s URL
+                            sheetId: sheetGid,     // gid from the tab’s URL
                             dimension: "ROWS",
                             startIndex: rowNumber - 1, // API is 0-based
                             endIndex: rowNumber,

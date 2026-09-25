@@ -3,6 +3,7 @@ import { readFile } from "fs/promises";
 import { getAccessToken } from "../utils/googleAuth.js";
 import { FLAVOUR_KEYS } from "../data/flavourKeys.js";
 import { ORDER_SHEET, mapSheetRow } from "../data/sheetSchema.js";
+import { DELIVERY_ICONS, PRODUCT_ICONS } from "../data/iconConfig.js";
 const config = JSON.parse(
     await readFile(new URL("../config/config.json", import.meta.url))
 );
@@ -239,39 +240,39 @@ export function buildWaypoints(formattedData) {
 
 function buildOrderMessage(c, i, eta) {
     const lines = [
-        `🔢 *${i + 1})*`,
-        `👤 *Name*: ${c.name}`,
-        `📞 *Phone*: ${c.phone}`,
-        `🏠 *Address*: ${cleanAddress(c.address)}`,
-        `📍 *Location*: ${c.location}`,
-        `⏱ ETA Start: *${eta.etaStart || "-"}*`,
-        `⏱ ETA End: *${eta.etaEnd || "-"}*`,
-        `📏 *Distance*: *${eta.distance} km*`,
-        `⏰ *Duration*: *${eta.duration} mins*`
+        `${DELIVERY_ICONS.order} *${i + 1})*`,
+        `${DELIVERY_ICONS.customer} *Name*: ${c.name}`,
+        `${DELIVERY_ICONS.phone} *Phone*: ${c.phone}`,
+        `${DELIVERY_ICONS.address} *Address*: ${cleanAddress(c.address)}`,
+        `${DELIVERY_ICONS.location} *Location*: ${c.location}`,
+        `${DELIVERY_ICONS.eta} ETA Start: *${eta.etaStart || "-"}*`,
+        `${DELIVERY_ICONS.eta} ETA End: *${eta.etaEnd || "-"}*`,
+        `${DELIVERY_ICONS.distance} *Distance*: *${eta.distance} km*`,
+        `${DELIVERY_ICONS.duration} *Duration*: *${eta.duration} mins*`
     ];
 
     if (c.curd) {
-        lines.push(`🥛 *Curd*: *${c.curd}*`);
+        lines.push(`${PRODUCT_ICONS.curd} *Curd*: *${c.curd}*`);
     }
     if (c.cheese) {
-        lines.push(`🧀 *Cheese*: *${c.cheese}*`);
+        lines.push(`${PRODUCT_ICONS.cheese} *Cheese*: *${c.cheese}*`);
     }
     if (c.butter) {
-        lines.push(`🧈 *Butter*: *${c.butter}*`);
+        lines.push(`${PRODUCT_ICONS.butter} *Butter*: *${c.butter}*`);
     }
     // build icecream dynamically
     const icecreamFlavors = flavorKeys
         .filter(key => c[key] && Number(c[key]) > 0)
         .map(key => `${key.toUpperCase()}-${c[key]}`);
     if (icecreamFlavors.length > 0) {
-        lines.push(`🍨 *Icecream*: *${icecreamFlavors.join(", ")}*`);
+        lines.push(`${PRODUCT_ICONS.icecream} *Icecream*: *${icecreamFlavors.join(", ")}*`);
     }
     if (c.amount) {
-        lines.push(`💰 *Amount*: *${c.amount}*`);
+        lines.push(`${DELIVERY_ICONS.amount} *Amount*: *${c.amount}*`);
     }
-    lines.push(`💵 *Balance*: *${c.balance}*`);
+    lines.push(`${DELIVERY_ICONS.balance} *Balance*: *${c.balance}*`);
     if (c.comments) {
-        lines.push(`📝 *Note*: *${c.comments}*`);
+        lines.push(`${DELIVERY_ICONS.note} *Note*: *${c.comments}*`);
     }
     return lines.join("\n");
 }
@@ -319,14 +320,14 @@ export function buildSummary(etas, orderedData) {
         .filter(([_, qty]) => qty > 0)
         .map(([k, qty]) => `${k.toUpperCase()}-${qty}`)
         .join(", ");
-    const summaryText = `📏 *Total Distance*: *${etas.totalDistance}*
-⏰ *Total Time*: *${etas.totalTime}*
-🥛 *Total Curd*: *${totalCurd}*
-🧀 *Total Cheese*: *${totalCheese}*
-🧈 *Total Butter*: *${totalButter}*
-🍨 *Icecreams*: *${flavorsLine || "-"}*
-💰 *Total Amount*: *${totalAmount}*
-💵 *Total Balance*: *${totalBalance}*`;
+    const summaryText = `${DELIVERY_ICONS.totalDistance} *Total Distance*: *${etas.totalDistance}*
+${DELIVERY_ICONS.totalTime} *Total Time*: *${etas.totalTime}*
+${PRODUCT_ICONS.curd} *Total Curd*: *${totalCurd}*
+${PRODUCT_ICONS.cheese} *Total Cheese*: *${totalCheese}*
+${PRODUCT_ICONS.butter} *Total Butter*: *${totalButter}*
+${PRODUCT_ICONS.icecream} *Icecreams*: *${flavorsLine || "-"}*
+${DELIVERY_ICONS.totalAmount} *Total Amount*: *${totalAmount}*
+${DELIVERY_ICONS.totalBalance} *Total Balance*: *${totalBalance}*`;
 
     const summaryObject = {
         totalDistance: etas.totalDistance,

@@ -9,6 +9,7 @@ import customerRoutes from "./routes/customers.js";
 import orderRoutes from "./routes/orders.js";
 import flavourRoutes from "./routes/flavours.js";
 import aiRouter from "./ai/aiRouter.js";
+import { SYSTEM_ICONS } from "./data/iconConfig.js";
 
 import dotenv from "dotenv";
 
@@ -35,5 +36,5 @@ app.get("/",(req,res)=>{
     res.send("Server Running")
 })
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`${SYSTEM_ICONS.started} Server running at http://localhost:${PORT}`);
 });
