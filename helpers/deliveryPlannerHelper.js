@@ -253,6 +253,12 @@ function buildOrderMessage(c, i, eta) {
     if (c.curd) {
         lines.push(`🥛 *Curd*: *${c.curd}*`);
     }
+    if (c.cheese) {
+        lines.push(`🧀 *Cheese*: *${c.cheese}*`);
+    }
+    if (c.butter) {
+        lines.push(`🧈 *Butter*: *${c.butter}*`);
+    }
     // build icecream dynamically
     const icecreamFlavors = flavorKeys
         .filter(key => c[key] && Number(c[key]) > 0)
@@ -293,12 +299,16 @@ export function buildOrdersMessage(orderedData, etas, chunkSize = 10) {
 
 export function buildSummary(etas, orderedData) {
     let totalCurd = 0;
+    let totalCheese = 0;
+    let totalButter = 0;
     let totalAmount = 0;
     let totalBalance = 0;
     const flavorTotals = {};
     flavorKeys.forEach(k => (flavorTotals[k] = 0));
     orderedData.forEach(c => {
         if (c.curd) totalCurd += Number(c.curd);
+        if (c.cheese) totalCheese += Number(c.cheese);
+        if (c.butter) totalButter += Number(c.butter);
         totalAmount += c.amount || 0;
         totalBalance += c.balance || 0;
         flavorKeys.forEach(k => {
@@ -312,6 +322,8 @@ export function buildSummary(etas, orderedData) {
     const summaryText = `📏 *Total Distance*: *${etas.totalDistance}*
 ⏰ *Total Time*: *${etas.totalTime}*
 🥛 *Total Curd*: *${totalCurd}*
+🧀 *Total Cheese*: *${totalCheese}*
+🧈 *Total Butter*: *${totalButter}*
 🍨 *Icecreams*: *${flavorsLine || "-"}*
 💰 *Total Amount*: *${totalAmount}*
 💵 *Total Balance*: *${totalBalance}*`;
@@ -320,6 +332,8 @@ export function buildSummary(etas, orderedData) {
         totalDistance: etas.totalDistance,
         totalTime: etas.totalTime,
         totalCurd,
+        totalCheese,
+        totalButter,
         icecreams: flavorsLine,
         totalAmount, totalBalance
     }

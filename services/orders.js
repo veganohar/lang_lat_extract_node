@@ -2,6 +2,7 @@ import { readFile } from "fs/promises";
 import { writeToSheet, readSheetinSequence, deleteRow, deleteRows, updateRow, updateSingleColumnMultipleRows } from "../utils/readWriteSheetsUtil.js";
 import { getCustomers } from "./customers.js";
 import { FLAVOUR_KEYS } from "../data/flavourKeys.js";
+import { PRODUCT_PRICES } from "../data/productPrices.js";
 import {
     CUSTOMER_SHEET,
     ORDER_SHEET,
@@ -49,8 +50,10 @@ export async function createSubscriptionOrders() {
                 mapUrl: obj.mapUrl,
                 latLng: obj.latLng,
                 curd: sub,
+                cheese: 0,
+                butter: 0,
                 ...Object.fromEntries(FLAVOUR_KEYS.map((key) => [key, 0])),
-                amount: sub * 130,
+                amount: sub * PRODUCT_PRICES.curd,
                 comments: "",
                 distance: obj.distance,
                 payment: 0,

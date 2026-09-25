@@ -3,6 +3,7 @@ import { expandUrlAndGetCoords } from '../utils/coordsUtil.js';
 import { writeToSheet, readSheetinSequence, clearData } from "../utils/readWriteSheetsUtil.js";
 import { getTwoWheelerDistances } from "../utils/findDistanceUtil.js";
 import { CUSTOMER_SHEET, PRICING_SHEET, getSheetField, getSheetRange, mapSheetRow } from "../data/sheetSchema.js";
+import { PRODUCT_CATALOG } from "../data/productPrices.js";
 
 const config = JSON.parse(await readFile(new URL("../config/config.json", import.meta.url)));
 const CUSTOMERSSHEET_ID = config.customersSheetId;
@@ -73,7 +74,7 @@ export async function getPrices() {
     }
   };
   });
-  return prices;
+  return [...PRODUCT_CATALOG, ...prices];
 }
 
 

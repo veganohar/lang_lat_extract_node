@@ -34,7 +34,7 @@ export const CUSTOMER_SHEET = createSheetSchema("Sheet1", [
   { key: "subscription", header: "subscription", column: "H", type: "number" },
 ]);
 
-const firstOrderFieldAfterFlavours = 7 + FLAVOUR_KEYS.length;
+const firstOrderFieldAfterFlavours = 9 + FLAVOUR_KEYS.length;
 
 export const ORDER_SHEET = createSheetSchema("Orders", [
   { key: "name", header: "Name", column: "A" },
@@ -43,10 +43,12 @@ export const ORDER_SHEET = createSheetSchema("Orders", [
   { key: "mapUrl", header: "Location/Map", column: "D" },
   { key: "latLng", header: "Lat,Lng", column: "E" },
   { key: "curd", header: "Curd", column: "F", type: "number" },
+  { key: "cheese", header: "Cheese", column: "G", type: "number" },
+  { key: "butter", header: "Butter", column: "H", type: "number" },
   ...FLAVOUR_KEYS.map((key, index) => ({
     key,
     header: key.toUpperCase(),
-    column: toSpreadsheetColumn(7 + index),
+    column: toSpreadsheetColumn(9 + index),
     type: "number",
   })),
   { key: "amount", header: "Amount", column: toSpreadsheetColumn(firstOrderFieldAfterFlavours), type: "number" },

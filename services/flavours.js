@@ -3,6 +3,7 @@ import { readSheetinSequence } from "../utils/readWriteSheetsUtil.js";
 import { recipes } from "../data/recipes.js";
 import { metrics } from "../data/metrics.js";
 import { roundoffs } from "../data/roundoffs.js";
+import { PRODUCT_CATALOG } from "../data/productPrices.js";
 import {
     ORDER_SHEET,
     PRICING_SHEET,
@@ -22,12 +23,18 @@ export async function getFlavours() {
             fields: ORDER_SHEET.fields.filter(({ key }) => key !== "name" && key !== "phone" && key !== "address" && key !== "mapUrl" && key !== "latLng"),
         }), CUSTOMERSSHEET_ID),
     ]);
-    const { flavours, curdOrderedCount } = combineFlavours(
+    const { flavours, curdOrderedCount, cheeseOrderedCount, butterOrderedCount } = combineFlavours(
         pricingData.map((row) => mapSheetRow(row, PRICING_SHEET)),
         stockData.map((row) => mapSheetRow(row, STOCK_SHEET)),
         ordersData
     );
-    return { flavours, curdOrderedCount };
+    return {
+        flavours,
+        curdOrderedCount,
+        cheeseOrderedCount,
+        butterOrderedCount,
+        products: PRODUCT_CATALOG,
+    };
 }
 
 function combineFlavours(pricingData, stockData, ordersData, idStart = 1) {
@@ -49,8 +56,10 @@ function combineFlavours(pricingData, stockData, ordersData, idStart = 1) {
             },
         };
     });
-    const curdOrderedCount = orders.Curd;
-    return { flavours, curdOrderedCount }
+    const curdOrderedCount = orders.curd ?? orders.Curd ?? 0;
+    const cheeseOrderedCount = orders.cheese ?? orders.Cheese ?? 0;
+    const butterOrderedCount = orders.butter ?? orders.Butter ?? 0;
+    return { flavours, curdOrderedCount, cheeseOrderedCount, butterOrderedCount }
 }
 
 function sumOrders(data) {
