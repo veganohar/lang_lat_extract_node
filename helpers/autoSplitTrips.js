@@ -1,3 +1,5 @@
+import { deviationVariants, hardCaps } from './planningDeviation.js';
+export { hardCaps } from './planningDeviation.js';
 import { riderSlot } from "./planningSchedule.js";
 import { coordinates } from "./multipleTrips.js";
 import { FLAVOUR_KEYS } from "../data/flavourKeys.js";
@@ -8,6 +10,8 @@ const toGoogleLocation = (value) => {
         longitude
     };
 };
+// Google durations always use whole seconds, including percentage-derived limits.
+const googleDuration = seconds => Math.round(seconds) + "s";
 const parseGoogleDuration = (value) => {
     if (!/^\d+(\.\d+)?s$/.test(value ?? "0s"))
         throw Error("Google returned an invalid route duration");
@@ -18,16 +22,8 @@ const estimateStraightLineKm = (a, b) => {
         y = toGoogleLocation(b);
     return Math.hypot((x.latitude - y.latitude) * 111, (x.longitude - y.longitude) * 106);
 };
-export function hardCaps(options) {
-    const strategy = options.strategy ?? "time",
-        all = ["hybrid", "best"].includes(strategy);
-    return {
-        maxHours: all || strategy === "time" ? options.maxHours : undefined,
-        maxDistanceKm: all || strategy === "distance" ? options.maxDistanceKm : undefined,
-        maxCurd: all || strategy === "capacity" ? options.maxCurd : undefined
-    };
-}
 export function validateAutoLimits(options) {
+    deviationVariants(options);
     const strategy = options.strategy ?? "time";
     if (!["time", "distance", "capacity", "hybrid", "best"].includes(strategy))
         throw Error("Choose Working hours, Distance, Capacity, Hybrid or Best plan.");
@@ -108,16 +104,18 @@ export function autoRequest(
                 ...(!sequence
                     ? {
                           fixedCost:
-                              objective === "capacity-first"
-                                  ? 200000 + index * 0.01
-                                  : 100000 + index * 0.01,
-                          costPerHour: objective === "time-first" ? 20 + index : index * 0.1
+                              objective === "distance-first"
+                                  ? 0.01 + index * 0.000001
+                                  : objective === "capacity-first"
+                                    ? 200000 + index * 0.01
+                                    : 100000 + index * 0.01,
+                          costPerHour: objective === "distance-first" ? 0 : objective === "time-first" ? 20 + index : index * 0.1
                       }
                     : {}),
                 ...(caps.maxHours
                     ? {
                           routeDurationLimit: {
-                              maxDuration: options.maxHours * 3600 + "s"
+                              maxDuration: googleDuration(options.maxHours * 3600)
                           }
                       }
                     : {}),
@@ -172,7 +170,7 @@ export function autoRequest(
                                   length: vehicleCount
                               },
                               (_, vehicle) =>
-                                  (estimateStraightLineKm(depot, row.latLng) * 0.5 * vehicle) /
+                                  (objective === "distance-first" ? 0 : estimateStraightLineKm(depot, row.latLng) * 0.5 * vehicle) /
                                       Math.max(1, vehicleCount - 1) +
                                   (objective === "capacity-first" ? row.curd * vehicle * 5 : 0)
                           )
@@ -190,7 +188,7 @@ export function autoRequest(
                 deliveries: [
                     {
                         arrivalLocation: toGoogleLocation(row.latLng),
-                        duration: options.serviceMinutes * 60 + "s"
+                        duration: googleDuration(options.serviceMinutes * 60)
                     }
                 ]
             }))
@@ -429,8 +427,8 @@ export function compareVerifiedCandidates(a, b) {
     return (
         Number(b.fullCoverage) - Number(a.fullCoverage) ||
         b.assignedCount - a.assignedCount ||
-        a.tripCount - b.tripCount ||
         a.combinedMeters - b.combinedMeters ||
+        a.tripCount - b.tripCount ||
         a.totalSeconds - b.totalSeconds
     );
 }
@@ -457,8 +455,8 @@ function createCachedOptimizer(optimize, providerState) {
                 return data;
             })
             .catch((error) => {
-                error.isProviderError = true;
-                providerState.failed = true;
+                error.isProviderError = !error.isCandidateError;
+                if (error.isProviderError) providerState.failed = true;
                 throw error;
             });
         requests.set(requestKey, response);
@@ -467,9 +465,7 @@ function createCachedOptimizer(optimize, providerState) {
 }
 function getPlanningObjectives(strategy) {
     if (strategy === "best") return ["time-first", "distance-first", "capacity-first"];
-    if (strategy === "distance") return ["distance-first"];
-    if (strategy === "capacity") return ["capacity-first"];
-    return ["time-first"];
+    return ["distance-first"];
 }
 function getDenseTripPrefix(trips) {
     const prefix = [];
@@ -738,13 +734,21 @@ export async function autoSplitTrips(orders, options, depotInput, optimize) {
         );
     const strategy = options.strategy ?? "time",
         planningObjectives = getPlanningObjectives(strategy);
+    const variants = deviationVariants(options);
+    const searching = variants.length > 1;
+    const configurations = variants.flatMap(variant => planningObjectives.map(solveObjective => ({
+        ...variant, solveObjective,
+        objective: searching ? `${solveObjective}:${variant.offset}` : solveObjective
+    })));
     const comparison = [],
         solutions = new Map();
     let providerStopped = false;
-    for (const objective of planningObjectives) {
+    for (const configuration of configurations) {
+        const { objective, solveObjective, offset, limits } = configuration;
+        const metadata = { objective, planningObjective: solveObjective, deviationPercent: offset, limits };
         if (providerStopped) {
             comparison.push({
-                objective,
+                ...metadata,
                 status: "unavailable",
                 fullCoverage: false,
                 reason: "Not attempted after a provider failure; no automatic retry."
@@ -756,7 +760,8 @@ export async function autoSplitTrips(orders, options, depotInput, optimize) {
                 rows,
                 {
                     ...options,
-                    objective
+                    ...limits,
+                    objective: solveObjective
                 },
                 depot,
                 seedResult.trips[0],
@@ -765,8 +770,14 @@ export async function autoSplitTrips(orders, options, depotInput, optimize) {
             providerStopped = Boolean(providerState.failed);
             const unassigned = [...invalid, ...result.unassigned],
                 fullCoverage = unassigned.length === 0 && result.assignedCount === orders.length;
+            if (!fullCoverage) console.info('[multipleTrips incomplete]', JSON.stringify({
+                ...metadata, assignedCount: result.assignedCount, orderCount: orders.length,
+                verifiedTripCount: result.trips.length,
+                recoveryAttempts: result.outstandingRecoveryAttempts ?? 0,
+                uncoveredRows: unassigned.map(row => ({ rowId: row.rowId, reason: row.reason }))
+            }));
             comparison.push({
-                objective,
+                ...metadata,
                 status: fullCoverage ? "complete" : "incomplete",
                 fullCoverage,
                 assignedCount: result.assignedCount,
@@ -777,13 +788,14 @@ export async function autoSplitTrips(orders, options, depotInput, optimize) {
             });
             solutions.set(objective, {
                 ...result,
+                ...metadata,
                 unassigned
             });
         } catch (error) {
-            if (strategy !== "best") throw error;
+            if (strategy !== "best" && !searching) throw error;
             if (error.isProviderError) providerStopped = true;
             comparison.push({
-                objective,
+                ...metadata,
                 status: "unavailable",
                 fullCoverage: false,
                 reason: error.message
@@ -807,6 +819,7 @@ export async function autoSplitTrips(orders, options, depotInput, optimize) {
         "Trips use actual Asia/Kolkata departures: at most one trip per rider per local day, on consecutive days. Empty slot gaps are compacted only by a fresh Google verification.",
         "Trip count, earlier-trip fullness, mileage and nearby short-final-trip goals are cost preferences, not a global optimum guarantee."
     ];
+    if (searching) notes.push("Deviation search compares the base limit and both sides of the allowed range. Hybrid and Best adjust active caps together. Capacity rounds down to whole boxes. Each plan is verified against its own limits; ties prefer the original settings. More settings require more Google requests.");
     if (result.recoveryWarning) notes.push(result.recoveryWarning);
     if (result.trafficRejectedRoutes)
         notes.push(
@@ -814,7 +827,7 @@ export async function autoSplitTrips(orders, options, depotInput, optimize) {
         );
     if (strategy === "best")
         notes.push(
-            "Best plan ranks these three tested candidates by complete coverage, assigned count, fewest trips, combined verified road distance, then sum of working time. All three hard caps apply to every candidate."
+            "Best plan ranks these three tested candidates by complete coverage, assigned count, combined verified road distance, fewest trips, then sum of working time. All three caps apply at each tested limit setting."
         );
     if (result.trips.length > 1) {
         const last = result.trips.at(-1),
@@ -834,10 +847,10 @@ export async function autoSplitTrips(orders, options, depotInput, optimize) {
         eligibleCount: orders.length,
         mode: "auto",
         strategy,
-        winner: strategy === "best" ? (winner?.objective ?? null) : undefined,
-        comparison: strategy === "best" ? comparison : undefined,
+        winner: (strategy === "best" || searching) ? (winner?.objective ?? null) : undefined,
+        comparison: (strategy === "best" || searching) ? comparison : undefined,
         candidates:
-            strategy === "best"
+            (strategy === "best" || searching)
                 ? comparison.map((c) => ({
                       ...c,
                       ...(solutions.has(c.objective)
