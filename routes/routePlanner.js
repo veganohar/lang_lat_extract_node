@@ -1,3 +1,4 @@
+import { multipleTrips } from '../services/multipleTrips.js';
 import express from "express";
 import { deliveryPlanner,  generateClusters } from "../services/routePlanner.js";
 
@@ -27,4 +28,12 @@ router.get("/generateClusters/:numClusters/:minPerCluster/:maxPerCluster/:orderI
   }
 })
 
+router.post('/multipleTrips', async (req, res) => {
+  try { res.json({ data: await multipleTrips.plan(req.body) }); }
+  catch (error) { res.status(400).json({ error: error.message }); }
+});
+router.post('/multipleTrips/reserve', async (req, res) => {
+  try { res.json({ data: await multipleTrips.reserve(req.body) }); }
+  catch (error) { res.status(409).json({ error: error.message }); }
+});
 export default router;

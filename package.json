@@ -5,7 +5,7 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"No tests yet\"",
+    "test": "node --test tests/multipleTrips.test.js tests/autoSplitTrips.test.js tests/planningModes.test.js",
     "start": "nodemon app.js",
     "dev": "nodemon --legacy-watch app.js"
   },
