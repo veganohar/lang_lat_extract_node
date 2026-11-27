@@ -23,9 +23,9 @@ export async function googleAutoOptimize(request) {
             /infeasib/i.test(body?.error?.message ?? "");
         throw Object.assign(
             new Error(
-                `Google auto-split optimization failed (HTTP ${response.status}). No estimated plan was substituted.`
+                `Google auto-split optimization failed (HTTP ${response.status}). ${body?.error?.message ? String(body.error.message).slice(0, 700) : "No provider detail was returned."} No estimated plan was substituted.`
             ),
-            { code: infeasible ? "AUTO_INFEASIBLE" : "AUTO_PROVIDER_FAILURE" }
+            { code: infeasible ? "AUTO_INFEASIBLE" : "AUTO_PROVIDER_FAILURE", isCandidateError: response.status === 400 }
         );
     }
     return response.json();

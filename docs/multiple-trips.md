@@ -102,7 +102,7 @@ Orders List > Multiple Trips now offers Working hours, Distance, Capacity, Hybri
 
 Shared positive integer rider count, start date and quarter-hour AM/PM departure schedule one trip per rider per Asia/Kolkata calendar day. Two riders and four used trips starting Saturday mean Saturday/Saturday/Sunday/Sunday. Provider windows use these actual departures. Sparse slots are re-solved with strictly fewer dense slots, never relabeled after verification. Cards show actual day/date/time and rider slot.
 
-One all-orders Google sequence is shared by all candidates. Flexible joint optimization can reassign and reorder every stop. Best compares distinct time-first, distance-first and capacity-first cost objectives, all under the same three hard caps, ranking complete coverage first, assigned count, fewest trips, combined verified road distance and sum of working time. It reports incomplete/unavailable comparisons honestly, without claiming a global optimum. Invalid, duplicate, over-cap, incomplete road/timing or traffic-infeasible responses cannot become verified trips.
+One all-orders Google sequence is shared by all candidates. Flexible joint optimization can reassign and reorder every stop. Best compares distinct time-first, distance-first and capacity-first cost objectives, all under the same three hard caps, ranking complete coverage first, assigned count, combined verified road distance, fewest trips and sum of working time. It reports incomplete/unavailable comparisons honestly, without claiming a global optimum. Invalid, duplicate, over-cap, incomplete road/timing or traffic-infeasible responses cannot become verified trips.
 
 API vigilance: no arbitrary numeric total call quota or artificial plan deadline. There is one seed, one or three distinct candidate objectives, at most one input-sized slot expansion per candidate, and strictly decreasing schedule compactions. Identical complete requests reuse a per-plan promise cache. Provider errors stop further attempts; no automatic retries or frontend resubmissions. Network fetch timeout is 75 seconds per request, server header 70 seconds; solver timeout is 30 seconds for the seed and 60 seconds for joint requests. Plain fetch performs no routing SDK retry. No extra verification API is used: all route legs, service timing, caps and scheduled departures are checked from the optimizeTours response.
 
@@ -230,3 +230,14 @@ Latest Docker sync: restarted only the existing backend/frontend services after 
 
 
 
+
+
+## Deviation search
+
+All dropdown modes support an allowed deviation percentage and percentage step. The default 0% keeps exact limits. For 100 km, +/-20% with a 5% step tests 80, 85, 90, 95, 100, 105, 110, 115 and 120 km. The base and exact endpoints are always included; duplicate whole-box capacity settings are removed. Hybrid and Best vary active caps together. Hours may be fractional within the percentage search; capacity rounds down to whole boxes. The base hours still use half-hour input increments.
+
+Each setting has its own verified per-trip limits and uses the same rider schedule and shared sequence hint. Working hours, Distance, Capacity and Hybrid use distance-first Google costs. Best additionally compares time-first and capacity-first objectives. Only complete plans are selectable. The winner has the lowest combined verified road distance; ties use trip count and time, then the original settings. These are tested alternatives, not proof of a global optimum.
+
+Trip count has no user-supplied cap. Two riders can operate three, four, five or more trips over successive local days. Per-trip limits never become total-plan limits. If no complete plan is verified (including invalid orders, provider failure or an individually infeasible order), the API rejects the request and registers no partial plan for submission.
+
+A search supports up to 41 distinct percentage settings (up to three objectives per setting in Best). Smaller steps beyond that are rejected before Sheets or Google access; use a larger step. Initial sequence requests and identical provider requests are shared. Provider outages stop further attempts; candidate-specific HTTP 400 rejections are shown with Google error details and do not cancel the remaining settings. Duration values are serialized with bounded fractional precision. Incomplete alternatives cannot be submitted. Planning is read-only; status submission still requires its explicit existing confirmation.

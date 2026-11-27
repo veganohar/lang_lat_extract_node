@@ -70,6 +70,23 @@ export function createTripService({ read = readRows, route = googleRoadSeconds, 
       const rows = await read(requested.map(o => o.rowId));
       if (rows.some((o, i) => fingerprint(o) !== fingerprint(requested[i]))) throw new Error('Orders changed or moved. Refresh the order list and plan again.');
       const result = auto ? await autoSplitTrips(rows,autoOptions,depot,autoOptimize) : await planConfiguredTrips(rows, configurations, depot, route);
+      if (auto) {
+        const complete = view => view.assignedCount === rows.length && view.unassigned.length === 0;
+        if (!complete(result)) throw new Error('No complete plan could be verified within the allowed limits. No partial plan was saved. Increase the limits or deviation and plan again.');
+        if (result.candidates) {
+          result.candidates = result.candidates.map(candidate => candidate.status === 'unavailable' || complete(candidate) ? candidate : {
+            ...candidate, status: 'unavailable', trips: [], assignedCount: 0,
+            reason: 'No complete plan was verified: ' + candidate.assignedCount + '/' + rows.length + ' orders covered. ' +
+              [...new Set(candidate.unassigned.map(row => row.reason))].join(' '),
+            diagnostics: {
+              uncoveredRows: candidate.unassigned.map(row => ({ rowId: row.rowId, reason: row.reason })),
+              attemptedTripCount: candidate.trips.length,
+              recoveryAttempts: candidate.outstandingRecoveryAttempts ?? 0
+            }
+          });
+          result.comparison = result.comparison.map(candidate => result.candidates.find(view => view.objective === candidate.objective));
+        }
+      }
       const group={selected:null};
       const register=(view,key)=>{const planId=randomUUID();plans.set(planId,{expires:now()+30*60*1000,group,key,trips:view.trips.map(t=>({rows:t.stops.map(stop=>rows.find(row=>row.rowId===stop.rowId)),verified:t.verificationStatus==='verified'||!auto,state:'ready'}))});return {...view,planId};};
       const candidates=result.candidates?.map(candidate=>candidate.status==='unavailable'?candidate:register(candidate,candidate.objective));
