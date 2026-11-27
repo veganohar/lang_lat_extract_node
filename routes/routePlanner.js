@@ -1,6 +1,6 @@
 import { multipleTrips } from '../services/multipleTrips.js';
 import express from "express";
-import { deliveryPlanner,  generateClusters } from "../services/routePlanner.js";
+import { deliveryPlanner } from "../services/routePlanner.js";
 
 const router = express.Router();
 
@@ -16,17 +16,6 @@ router.get("/deliveryPlanner/:rowIds/:startTime/:avgDelay", async (req, res) => 
   }
 })
 
-
-// OptiPath/:startTime/:avgDelay/:numClusters/:minPerCluster/:maxPerCluster
-router.get("/generateClusters/:numClusters/:minPerCluster/:maxPerCluster/:orderIds", async (req, res) => {
-  try {
-    const rows = await generateClusters(req.params);
-    res.json({ data: rows });
-  } catch (error) {
-    console.error("Error in Generating Clusters:", error.message, error.stack);
-    res.status(500).json({ error: "Failed to Generating Clusters" });
-  }
-})
 
 router.post('/multipleTrips', async (req, res) => {
   try { res.json({ data: await multipleTrips.plan(req.body) }); }
